@@ -1,0 +1,27 @@
+Skills instaladas - turnos-odontologia_cattaneo
+Fecha: 2026-10-11
+
+Instaladas (7, globales con `npx skills add <id> -g`):
+
+1. vercel-labs/agent-skills@vercel-react-best-practices
+   Buenas practicas React; frontend mobile-first de reserva/cancelacion (C-09).
+
+2. supabase/agent-skills@supabase-postgres-best-practices
+   Buenas practicas Postgres; sostiene anti-solape y soft-delete de C-02 en single-instance.
+
+3. prisma/skills@prisma-postgres-setup
+   Setup y migraciones Postgres; base del modelo turnos/agenda/disponibilidad.
+
+4. github/awesome-copilot@sql-optimization
+   Optimizacion SQL; consultas de huecos libres y agenda diaria/semanal sin choques.
+
+5. mrgoonie/claudekit-skills@backend-development
+   Desarrollo backend; FastAPI monolitico modular (reglas 3h/30min, mail obligatorio C-05).
+
+6. amelnagdy/guard-skills@test-guard
+   Guardias de tests; protege solape, cancelacion con token y recordatorios APScheduler (C-08).
+
+7. alirezarezvani/claude-skills@tdd-guide
+   Guia TDD; test-primero en cambios C-01..C-12 y deploy single-host (C-12).
+
+No instaladas (rechazadas por el usuario): sickn33/agentic-awesome-skills@python-fastapi-development, wangyendt/wayne-skills@send-email, terrylica/cc-skills@infra-deploy.

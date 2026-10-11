@@ -152,6 +152,82 @@
     "discovery_pdf": "discovery/discovery.pdf"
   },
   "owner": "active-orchestrator",
-  "step": "discovery",
-  "version": 4
+  "roadmap": {
+    "created_by": "roadmap-generator",
+    "source": "CHANGES.md",
+    "changes": ["C-01", "C-02", "C-03", "C-04", "C-05", "C-06", "C-07", "C-08", "C-09", "C-10", "C-11", "C-12"],
+    "gate_closed": "2026-10-11",
+    "resolutions": {
+      "PB-01": "SOLO token_cancelacion; C-06 only ?token= 403 generic; C-09 only GET /cancelar?token=; C-05 token per turno only",
+      "PB-02": "mail OBLIGATORIO; RN-TU-01 email required + 400; sin-mail fallback removed from C-05/C-08/C-09",
+      "PB-03": "APScheduler en-proceso (DD-05/SU-03); C-08 single-process 5-10min, REDIS_URL documented only",
+      "PB-04": "HIBRIDO; C-02 soft-delete default activo=false, DELETE fisico solo cero turnos, anonimization manual Ley 25.326 documentada",
+      "PB-05": "Gmail provisorio + backups host disk 7-day; C-12 SMTP_* Gmail app-password, provisorio/migrable",
+      "PB-06": "tabla sola, NO CSV en v1; C-11 table only",
+      "PB-07": "DEFERRED to first frontend propose (C-09); left open",
+      "PB-08": "v1.1; reprogramacion OUT of v1 scope"
+    }
+  },
+  "step": "done",
+  "agents": {
+    "created_by": "agent-instruction",
+    "files": ["AGENTS.md", "CLAUDE.md"],
+    "reglas_applied": ["pydantic-forbid", "sql-parametrizado-exclude-forupdate", "soft-delete-hibrido", "solo-token-paciente", "5-campos-mail-obligatorio", "apscheduler-en-proceso", "no-select-star-keyset", "ts-estricto-mobile-first", "tdd-sin-mocks-internos", "env-sin-secretos", "no-commit-sin-pedido"],
+    "global_absent": true,
+    "confirmed": "2026-10-11-si-a-todo-11-verbatim"
+  },
+  "registry": {
+    "created_by": "skill-registry",
+    "file": ".atl/skill-registry.md"
+  },
+  "skills": {
+    "created_by": "find-skill",
+    "recommended": [
+      "vercel-labs/agent-skills@vercel-react-best-practices",
+      "supabase/agent-skills@supabase-postgres-best-practices",
+      "prisma/skills@prisma-postgres-setup",
+      "mrgoonie/claudekit-skills@backend-development",
+      "sickn33/agentic-awesome-skills@python-fastapi-development",
+      "github/awesome-copilot@sql-optimization",
+      "amelnagdy/guard-skills@test-guard",
+      "alirezarezvani/claude-skills@tdd-guide",
+      "terrylica/cc-skills@infra-deploy",
+      "wangyendt/wayne-skills@send-email"
+    ],
+    "installed": [
+      "vercel-labs/agent-skills@vercel-react-best-practices",
+      "supabase/agent-skills@supabase-postgres-best-practices",
+      "prisma/skills@prisma-postgres-setup",
+      "github/awesome-copilot@sql-optimization",
+      "mrgoonie/claudekit-skills@backend-development",
+      "amelnagdy/guard-skills@test-guard",
+      "alirezarezvani/claude-skills@tdd-guide"
+    ]
+  },
+  "version": 4,
+  "kb": {
+    "created_by": "kb-creator",
+    "source": "interactive",
+    "discovery": {
+      "problem": "El consultorio coordina turnos por WhatsApp/papel/planilla, lo que genera dobles reservas y tiempo perdido confirmando manualmente cada turno.",
+      "system_type": "web_app + api backend con workers (FastAPI monolitico modular + React responsive mobile-first, notificaciones mail por cola)",
+      "domain": "odontologia — gestion de turnos (salud, Argentina)",
+      "scale": "team (un consultorio Cattaneo, equipo chico <50 personas, single tenant inicial, multi-profesional dia 1)",
+      "stack": "Python FastAPI + React + Postgres single-instance",
+      "needs_infra": true
+    },
+    "files": [
+      "knowledge-base/01_vision_y_objetivos.md",
+      "knowledge-base/02_descripcion_general.md",
+      "knowledge-base/03_actores_y_roles.md",
+      "knowledge-base/04_modelo_de_datos.md",
+      "knowledge-base/05_reglas_de_negocio.md",
+      "knowledge-base/06_funcionalidades.md",
+      "knowledge-base/07_flujos_principales.md",
+      "knowledge-base/08_arquitectura_propuesta.md",
+      "knowledge-base/09_decisiones_y_supuestos.md",
+      "knowledge-base/10_preguntas_abiertas.md",
+      "knowledge-base/README.md"
+    ]
+  }
 }

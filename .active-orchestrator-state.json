@@ -1,0 +1,157 @@
+{
+  "discovery": {
+    "casos_de_uso": [
+      "Como paciente, quiero ver los horarios libres para reservar sin tener que llamar.",
+      "Como odontólogo, quiero ver mis turnos agendados para organizar mis horarios.",
+      "Como recepción, quiero crear/editar/borrar turnos y comprobar los datos del cliente para validar su validez."
+    ],
+    "competitors": [
+      {
+        "name": "Dentalink",
+        "notes_file": "discovery/market-research-odontologia-AR.md"
+      },
+      {
+        "name": "ClinIA",
+        "notes_file": "discovery/market-research-odontologia-AR.md"
+      },
+      {
+        "name": "DoctorYa",
+        "notes_file": "discovery/market-research-odontologia-AR.md"
+      },
+      {
+        "name": "ZynkMed",
+        "notes_file": "discovery/market-research-odontologia-AR.md"
+      },
+      {
+        "name": "Odentix",
+        "notes_file": "discovery/market-research-odontologia-AR.md"
+      },
+      {
+        "name": "MediTurn",
+        "notes_file": "discovery/market-research-odontologia-AR.md"
+      },
+      {
+        "name": "Medilink",
+        "notes_file": "discovery/market-research-odontologia-AR.md"
+      },
+      {
+        "name": "dt.dental",
+        "notes_file": "discovery/market-research-odontologia-AR.md"
+      },
+      {
+        "name": "AgendaPro",
+        "notes_file": "discovery/market-research-odontologia-AR.md"
+      },
+      {
+        "name": "Docturno",
+        "notes_file": "discovery/market-research-odontologia-AR.md"
+      },
+      {
+        "name": "Doctoralia",
+        "notes_file": "discovery/market-research-odontologia-AR.md"
+      },
+      {
+        "name": "Meducar",
+        "notes_file": "discovery/market-research-odontologia-AR.md"
+      },
+      {
+        "name": "DarTurnos",
+        "notes_file": "discovery/market-research-odontologia-AR.md"
+      },
+      {
+        "name": "Open Dental",
+        "notes_file": "discovery/market-research-odontologia-AR.md"
+      },
+      {
+        "name": "Dentrix",
+        "notes_file": "discovery/market-research-odontologia-AR.md"
+      },
+      {
+        "name": "Curve Dental",
+        "notes_file": "discovery/market-research-odontologia-AR.md"
+      },
+      {
+        "name": "NexHealth",
+        "notes_file": "discovery/market-research-odontologia-AR.md"
+      },
+      {
+        "name": "Fresha",
+        "notes_file": "discovery/market-research-odontologia-AR.md"
+      }
+    ],
+    "created_by": "discovery-research",
+    "funcionalidades_necesarias": [
+      "Gestión de recepción (crear/editar/borrar/validar turnos).",
+      "Agenda por profesional con vista diaria/semanal.",
+      "Reserva online por paciente (con DNI/teléfono/obra social obligatorios).",
+      "Cancelación con anticipación mínima de 3 horas.",
+      "Duración de turno predefinida de 30 minutos, personalizable por el personal.",
+      "Recordatorios automáticos por mail (v1)."
+    ],
+    "funcionalidades_opcionales": [
+      "Historia clínica / ficha del paciente vinculada al turno (post-v1)."
+    ],
+    "integraciones": [
+      "Mail: recordatorios automáticos (v1 confirmado).",
+      "WhatsApp: comunicación/recordatorios (alcance v1 vs. post-v1 a definir).",
+      "Sistemas de obras sociales: alcance a definir (campo obligatorio vs. validación contra padrón/API)."
+    ],
+    "preguntas_abiertas": [
+      "Hace falta login para el paciente, o alcanza con DNI + telefono por turno?",
+      "Validacion de obra social: campo obligatorio o consulta a padron/API? (Evidencia: ClinIA valida contra PUCO/RENAPER; DoctorYa gestiona copagos por plan — se recomienda validar.)",
+      "WhatsApp entra en v1 junto al mail, o el recordatorio v1 es solo mail y WhatsApp va despues? (Evidencia: el informe recomienda WhatsApp primero, mail como fallback.)",
+      "Se incluye sena por Mercado Pago + lista de espera con huecos en v1 o v1.1? (Evidencia: DarTurnos/Fresha y ZynkMed/NexHealth.)"
+    ],
+    "problema": "El consultorio coordina turnos por WhatsApp/papel/planilla, lo que genera dobles reservas y tiempo perdido confirmando manualmente cada turno.",
+    "reglas_de_negocio": [
+      "No se puede reservar sin DNI/teléfono; obra social requerida (campo obligatorio al reservar).",
+      "No se puede cancelar un turno con menos de 3 horas de anticipación.",
+      "Un profesional no puede tener dos turnos superpuestos.",
+      "Duración default de 30 minutos, personalizable por el personal."
+    ],
+    "restricciones": [
+      "Tiene que andar bien en celular — la mayoría reserva desde el teléfono (mobile-first).",
+      "Sin stack obligatorio ni plazo rígido declarado."
+    ],
+    "riesgos": [
+      "Si recepcion no mantiene las disponibilidades actualizadas, el sistema muestra horarios que no estan libres: choques y dobles reservas.",
+      "Supuesto sin probar: que la validacion de obra social como campo obligatorio alcance sin consultar padron externo. (Evidencia: ClinIA/DoctorYa validan.)",
+      "Nuevo (mercado): v1 con recordatorios solo por mail queda bajo el estandar (13/18 usan WhatsApp).",
+      "Nuevo (mercado): opacidad de precios y cautividad de datos son quejas del segmento; ningun vendor AR publicita exportacion."
+    ],
+    "sources": [
+      "https://www.softwaredentalink.com/",
+      "https://odentix.framer.website/",
+      "https://www.clinia.com.ar/software-para-clinicas",
+      "https://doctorya.com.ar/",
+      "https://zynkmed.com.ar/",
+      "https://mediturn.com.ar/",
+      "https://www.softwaremedilink.com/",
+      "https://agendapro.com/",
+      "https://dtdental.co/",
+      "https://www.docturno.com/",
+      "https://www.doctoraliar.com/",
+      "https://pro.doctoralia.com/ar/agenda-doctoralia-para-especialistas",
+      "http://meducar.com/",
+      "https://darturnos.com/",
+      "https://www.opendental.com/",
+      "https://www.dentrix.com/",
+      "https://www.curvedental.com/",
+      "https://www.nexhealth.com/doctors",
+      "https://www.fresha.com/pricing",
+      "https://www.consulmed.com.ar/"
+    ],
+    "usuarios": [
+      "Paciente: ve horarios libres y reserva/cancela sin llamar ni escribir.",
+      "Odontólogo/a: ve sus turnos agendados para organizar sus horarios (varios profesionales con agenda propia desde el día 1).",
+      "Recepción/Admin: CRUD completo de turnos (crea, edita, borra) y comprueba los datos del cliente para validar su validez."
+    ],
+    "sources_fetched_at": "2026-10-10/11",
+    "market_research_file": "discovery/market-research-odontologia-AR.md",
+    "market_research_pdf": "discovery/market-research-odontologia-AR.pdf",
+    "discovery_pdf": "discovery/discovery.pdf"
+  },
+  "owner": "active-orchestrator",
+  "step": "discovery",
+  "version": 4
+}

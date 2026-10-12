@@ -1,8 +1,9 @@
 """Profesional (KB-04)."""
 
 import uuid
+from datetime import datetime
 
-from sqlalchemy import Boolean, Index, Integer, String, Uuid, text
+from sqlalchemy import Boolean, DateTime, Index, Integer, String, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -26,4 +27,10 @@ class Profesional(Base):
     )
     activo: Mapped[bool] = mapped_column(
         Boolean, default=True, server_default="true", nullable=False
+    )
+    # C-04 D-2: freshness para UI (mitiga SU-01); NULL = "sin datos".
+    # La actualiza el trigger DB `touch_profesional_updated` (migración 002),
+    # no la app — invariante total ante cualquier write en disponibilidad/bloqueo.
+    ultima_actualizacion: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
     )

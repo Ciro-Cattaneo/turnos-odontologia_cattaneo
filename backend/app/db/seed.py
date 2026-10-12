@@ -1,50 +1,27 @@
 """Seeds C-02 (D-7): admin idempotente desde env + demo staging-only.
 
-Password hashing: PBKDF2-HMAC-SHA256 de la stdlib (`hashlib`), formato
-`pbkdf2_sha256$<iter>$<salt_hex>$<hash_hex>` — decisión §2: evita sumar
-dependencia (bcrypt/argon2) antes de C-03; C-03 elige el esquema final de
-auth + rotación al primer login (aquí solo creación). Iteraciones 600k
-(guía OWASP 2023 para PBKDF2-HMAC-SHA256).
+Password hashing (C-03 D-1): esquema final argon2id vía `app.core.security`
+(hashes nuevos `$argon2id$…`); `verify_password` dual por prefijo (acepta el
+PBKDF2 transitorio `pbkdf2_sha256$…` solo-lectura para la rotación al primer
+login — aquí solo creación, la rotación vive en `modules/auth/service.py`).
 
 Ninguna función commitea: hacen flush y el llamador (CLI/tests) commitea o
 revierte — transacciones cortas (supabase-postgres-best-practices).
 """
 
-import hashlib
-import hmac
 import os
-import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
+from app.core.security import hash_password, verify_password
 from app.models.paciente import Paciente
 from app.models.profesional import Profesional
 from app.models.turno import Turno, TurnoEstado, TurnoOrigen
 from app.models.usuario_staff import StaffRol, UsuarioStaff
 
-_ITERACIONES = 600_000
-
-
-def hash_password(password: str) -> str:
-    """Hash PBKDF2-HMAC-SHA256 con salt aleatorio (nunca plaintext)."""
-    salt = secrets.token_bytes(16)
-    digest = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, _ITERACIONES)
-    return f"pbkdf2_sha256${_ITERACIONES}${salt.hex()}${digest.hex()}"
-
-
-def verify_password(password: str, guardado: str) -> bool:
-    """Verifica contra el formato de `hash_password` (tiempo constante)."""
-    try:
-        esquema, iteraciones, salt_hex, hash_hex = guardado.split("$")
-        assert esquema == "pbkdf2_sha256"
-        digest = hashlib.pbkdf2_hmac(
-            "sha256", password.encode(), bytes.fromhex(salt_hex), int(iteraciones)
-        )
-    except (ValueError, AssertionError):
-        return False
-    return hmac.compare_digest(digest.hex(), hash_hex)
+__all__ = ["hash_password", "verify_password", "seed_admin", "seed_admin_from_env"]
 
 
 def seed_admin(session: Session, email: str, password: str) -> UsuarioStaff:

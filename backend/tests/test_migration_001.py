@@ -146,9 +146,14 @@ def test_upgrade_head_crea_ocho_tablas_y_exclude(pg_test_url, alembic_on_testdb)
 
 
 def test_downgrade_elimina_y_reupgrade_es_idempotente(pg_test_url, alembic_on_testdb):
-    """# AC core-models/Migracion-upgrade-downgrade — baja y vuelve a subir."""
+    """# AC core-models/Migracion-upgrade-downgrade — baja y vuelve a subir.
+
+    Nota C-04: con 2 migraciones (`001` + `002_agenda_meta`), `downgrade -1`
+    solo revierte la 002 (las tablas C-02 siguen); el "elimina todo" del AC
+    original es `downgrade base`.
+    """
     alembic_on_testdb("upgrade", "head")
-    alembic_on_testdb("downgrade", "-1")
+    alembic_on_testdb("downgrade", "base")
     engine = sqlalchemy.create_engine(pg_test_url)
     try:
         with engine.connect() as conn:

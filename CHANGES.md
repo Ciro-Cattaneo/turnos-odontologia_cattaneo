@@ -130,7 +130,7 @@ Rama near-critical de operación (recepción no puede trabajar sin ella):
 ## FASE 2 — Dominio turnos y agenda (backend)
 
 ### [C-03] `auth-staff-rbac`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado
 - **Scope**:
   - `POST /api/auth/login` (email+password, hash bcrypt/argon2) → cookie httpOnly con sesión/rol; `POST /api/auth/logout`
   - Dependencia `require_role(...)` por router; odontólogo scoping a su `profesional_id` (solo agenda propia); Admin ⊇ Recepción ⊇ lectura
@@ -145,7 +145,7 @@ Rama near-critical de operación (recepción no puede trabajar sin ella):
   - `knowledge-base/07_flujos_principales.md` §Flujo 5
 
 ### [C-04] `agenda-disponibilidad-backend`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado
 - **Scope**:
   - `GET /api/profesionales` (público, solo activos) + `GET /api/profesionales/{id}/agenda?vista=dia|semana&fecha=` (staff + cálculo público de slots según flag)
   - `GET /api/disponibilidad?profesional_id=&desde=&hasta=` (público, rate-limited 30 req/min/IP): cómputo `ventanas − bloqueos − turnos activos`; granularidad = `duracion_default_min` del profesional

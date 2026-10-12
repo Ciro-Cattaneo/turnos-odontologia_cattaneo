@@ -24,4 +24,13 @@ Instaladas (7, globales con `npx skills add <id> -g`):
 7. alirezarezvani/claude-skills@tdd-guide
    Guia TDD; test-primero en cambios C-01..C-12 y deploy single-host (C-12).
 
-No instaladas (rechazadas por el usuario): sickn33/agentic-awesome-skills@python-fastapi-development, wangyendt/wayne-skills@send-email, terrylica/cc-skills@infra-deploy.
+No instaladas (3, rechazadas por el usuario en el gate find-skill):
+
+8. sickn33/agentic-awesome-skills@python-fastapi-development
+   Rechazada por el usuario; solapa con backend-development ya instalada (cubre FastAPI).
+
+9. wangyendt/wayne-skills@send-email
+   Rechazada por el usuario; envio v1 es SMTP Gmail provisorio simple via cola, no justifica skill externa.
+
+10. terrylica/cc-skills@infra-deploy
+   Rechazada por el usuario; deploy v1 es single-host Docker Compose simple (C-12), fuera de alcance fundacion.

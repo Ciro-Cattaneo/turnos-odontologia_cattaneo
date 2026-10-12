@@ -1,0 +1,52 @@
+/* Shell mínimo mobile-first (base 360px, CSS plano — stack final en C-09). */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+#root {
+  width: 100%;
+  max-width: 100%;
+}
+
+.shell {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.shell img,
+.shell table {
+  max-width: 100%;
+}
+
+.action {
+  display: inline-block;
+  min-height: 44px;
+  line-height: 44px;
+  padding: 0 1.25rem;
+  border-radius: 0.5rem;
+  background: #0b5fff;
+  color: #fff;
+  text-decoration: none;
+}
+
+@media (min-width: 720px) {
+  .shell {
+    max-width: 720px;
+  }
+}

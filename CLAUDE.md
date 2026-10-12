@@ -58,7 +58,7 @@ Fuente de verdad: `.atl/skill-registry.md` (generado por `skill-registry`). Fila
 
 Cargá la skill correspondiente al contexto ANTES de escribir código.
 
-> Los compact rules de cada skill los resuelve el orquestador desde `.atl/skill-registry.md` (generado por `skill-registry`; no versionado — no está en el repo). Esta tabla solo mapea skill→rol.
+> Los compact rules de cada skill los resuelve el orquestador desde `.atl/skill-registry.md` (generado por `skill-registry`; versionado en el repo). Esta tabla solo mapea skill→rol.
 
 ---
 
@@ -93,6 +93,7 @@ Son contrato; romperlas es un defecto. Formato `NUNCA X → hacer Y`:
 9. NUNCA test con mocks internos -> TDD red-green-refactor, mocks solo bordes, DB real si persistencia es sujeto, test_<escenario>_<resultado> + parametrizacion.
 10. NUNCA secreto en repo -> todo por env (Gmail provisorio + backups host-disk 7d migrables); TZ America/Argentina/Buenos_Aires, persistir UTC.
 11. NUNCA commit/build sin pedido -> no commitear/pushear salvo orden explicita; conventional commits sin co-autoria IA.
+12. NUNCA datos reales de pacientes en repo/ejemplos/tests/capturas -> usar solo datos ficticios (Ley 25.326, ver knowledge-base).
 
 ---
 

@@ -92,7 +92,7 @@ Rama near-critical de operación (recepción no puede trabajar sin ella):
 ## FASE 1 — Fundación y modelos core
 
 ### [C-01] `foundation-setup`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado
 - **Scope**:
   - Scaffolding `backend/app/main.py` (FastAPI, routers vacíos, `GET /api/health`), `core/` (config por env, rate-limit base), `db/` (base, session)
   - Scaffolding `frontend/` (React + Vite + React Router, `features/` + `shared/` + `pages/` vacíos)

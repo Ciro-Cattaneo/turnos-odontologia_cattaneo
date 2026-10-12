@@ -1,0 +1,50 @@
+# Turnos odontología (Cattaneo) — compose v1 (D-5): web + db.
+# Worker APScheduler en-proceso (regla dura 6): SIN servicio worker/redis día 1.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: turnos
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme-solo-local}
+      POSTGRES_DB: turnos
+      TZ: ${TZ:-America/Argentina/Buenos_Aires}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U turnos -d turnos"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  web:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      TZ: ${TZ:-America/Argentina/Buenos_Aires}
+    ports:
+      - "8000:8000"
+
+  # Futura imagen worker = misma que web con comando scheduler APScheduler (C-08).
+  # worker:
+  #   build: ./backend
+  #   command: ["python", "-m", "app.worker.scheduler"]
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   env_file:
+  #     - .env
+
+  # Solo si el worker migra a ARQ/Celery (PB-03): descomentar junto a REDIS_URL.
+  # redis:
+  #   image: redis:7-alpine
+  #   volumes:
+  #     - redisdata:/data
+
+volumes:
+  pgdata:

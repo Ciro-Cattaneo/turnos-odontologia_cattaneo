@@ -1,1 +1,6 @@
-.atl/
+.atl/*
+!.atl/skill-registry.md
+.env
+backend/__pycache__/
+frontend/node_modules/
+frontend/dist/

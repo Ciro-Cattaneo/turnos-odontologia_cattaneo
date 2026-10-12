@@ -96,7 +96,19 @@ def test_alembic_offline_corre_sin_conectar_db():
     assert proc.returncode == 0, proc.stderr
 
 
-def test_base_sin_modelos_de_dominio_todavia():
-    """C-01 no trae dominio: `Base.metadata` arranca vacío (C-02 lo llena)."""
-    assert len(Base.metadata.tables) == 0
+def test_base_no_declara_tablas_dominio():
+    """D-1 — `app/db/base.py` no declara tablas: el dominio vive en `app.models`.
+
+    Reemplaza al assert C-01 `Base.metadata` vacio (su docstring preveia que
+    C-02 lo llena): con `app.models` importado en la sesion, metadata ya no
+    esta vacio; lo invariante es que `base.py` solo define `Base`.
+    """
+    import ast
+    from pathlib import Path
+
+    base_py = Path(__file__).resolve().parent.parent / "app" / "db" / "base.py"
+    tree = ast.parse(base_py.read_text())
+
+    clases = [node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
+    assert clases == ["Base"]
     assert issubclass(Base, sqlalchemy.orm.DeclarativeBase)

@@ -8,6 +8,7 @@ from alembic import context
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import app.models  # noqa: E402,F401  (D-1: registra las 8 tablas en metadata)
 from app.core.config import get_settings  # noqa: E402
 from app.db.base import Base  # noqa: E402
 

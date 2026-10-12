@@ -82,8 +82,21 @@ def test_env_example_sin_secretos_reales():
 
 
 def test_env_real_ignorado_por_git():
-    """# AC service-config/S2 — `.env` real nunca se versiona."""
+    """# AC service-config/S2 — `.env` real nunca se versiona.
+
+    Un `.env` local ES esperado en dev (DATABASE_URL real para PG); el
+    contrato es que git lo ignore, no que el archivo este ausente.
+    """
+    import subprocess
+
     gitignore = (REPO_ROOT / ".gitignore").read_text().splitlines()
 
     assert ".env" in gitignore
-    assert not (REPO_ROOT / ".env").exists()
+    if (REPO_ROOT / ".env").exists():
+        proc = subprocess.run(
+            ["git", "check-ignore", "-q", ".env"],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            timeout=30,
+        )
+        assert proc.returncode == 0, ".env existe pero git no lo ignora"

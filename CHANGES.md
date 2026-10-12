@@ -108,7 +108,7 @@ Rama near-critical de operación (recepción no puede trabajar sin ella):
   - `knowledge-base/02_descripcion_general.md` §Stack tecnológico
 
 ### [C-02] `core-models`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado
 - **Scope**:
   - Modelos: `Paciente, Profesional, Disponibilidad, Bloqueo, Turno, Notificacion, UsuarioStaff, AuditoriaTurno` (atributos/constraints/índices según 04)
   - `Turno`: enum `estado` + `origen`, `token_cancelacion UUID UNIQUE`, columnas reservadas post-v1 `pago_estado NULL, lista_espera_pos NULL` (sin lógica); `canal_recordatorio ENUM(mail)` extensible

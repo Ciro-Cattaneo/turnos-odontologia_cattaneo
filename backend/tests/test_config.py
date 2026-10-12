@@ -32,7 +32,12 @@ MANAGED_KEYS = list(REQUIRED_ENV) + [
 
 
 @pytest.fixture
-def clean_env(monkeypatch):
+def clean_env(monkeypatch, tmp_path):
+    # Aisla tambien el `.env` real de repo-root (pydantic `env_file=".env"`
+    # lo lee segun cwd): sin chdir, un `.env` local de dev rellena las vars
+    # que el test borra y los casos "faltante" no fallan (falso verde/rojo
+    # segun la maquina). Los paths del repo se resuelven absolutos (REPO_ROOT).
+    monkeypatch.chdir(tmp_path)
     for key in MANAGED_KEYS:
         monkeypatch.delenv(key, raising=False)
     return monkeypatch

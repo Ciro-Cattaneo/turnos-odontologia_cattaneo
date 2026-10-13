@@ -36,7 +36,7 @@ turnos-odontologia_cattaneo/
 │       ├── shared/ (api client, ui, hooks)
 │       └── pages/ (publicas + staff)
 ├── docker-compose.yml (web + worker + postgres + [redis opcional])
-└── knowledge-base/ openspec/ discovery/
+└── knowledge-base/ openspec/ docs/discovery/
 ```
 
 ## Seguridad

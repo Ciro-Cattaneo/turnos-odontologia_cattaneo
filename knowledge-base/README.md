@@ -1,6 +1,6 @@
 # turnos-odontologia_cattaneo — Base de Conocimiento
 
-Base generada en modo interactivo (Ronda 1 respondida: `1:b 2:a 3:c 4:a 5:d`) + Discovery previo (`discovery/discovery.md`, `discovery/market-research-odontologia-AR.md`). Stack: FastAPI + React + Postgres. MVP: flujo base + mail; WA/MP/lista de espera/HC fuera de v1. Prioridad: costo mínimo.
+Base generada en modo interactivo (Ronda 1 respondida: `1:b 2:a 3:c 4:a 5:d`) + Discovery previo (`docs/discovery/checklist-11-puntos.md`, `docs/discovery/market-research-odontologia-AR.md`). Stack: FastAPI + React + Postgres. MVP: flujo base + mail; WA/MP/lista de espera/HC fuera de v1. Prioridad: costo mínimo.
 
 ## Índice de Archivos
 

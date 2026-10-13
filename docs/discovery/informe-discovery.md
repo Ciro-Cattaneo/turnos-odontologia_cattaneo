@@ -9,7 +9,7 @@
 > | **Integrantes** | A completar por el equipo (no consta en el repositorio) |
 > | **Fecha de consulta de fuentes originales** | 2026-10-10 / 2026-10-11 |
 > | **Fecha de verificación de fuentes y edición de este informe** | 2026-10-12 |
-> | **Fuente histórica** | `discovery/market-research-odontologia-AR.md` (247 líneas) + `discovery/discovery.md` (checklist de 11 puntos). La carpeta `discovery/` se conserva como fuente histórica; este informe es el entregable de la Etapa 2 en la ubicación exigida por la consigna. |
+> | **Fuente histórica** | `docs/discovery/market-research-odontologia-AR.md` (247 líneas) + `docs/discovery/checklist-11-puntos.md` (checklist de 11 puntos de la Etapa 1). La carpeta `discovery/` de raíz se consolidó en esta misma carpeta el 2026-10-13 (dedup: `discovery/discovery.md` era duplicado exacto del checklist y se eliminó; su PDF se conserva como `checklist-11-puntos.pdf`); este informe es el entregable de la Etapa 2 en la ubicación exigida por la consigna. |
 > | **Stack del proyecto** | FastAPI + React + Postgres (ver `knowledge-base/`, `AGENTS.md`, `CHANGES.md`) |
 >
 > **Criterio metodológico** (heredado del market-research, sin cambios): solo fuentes verificables
@@ -29,7 +29,7 @@ internacionales) a partir de fuentes oficiales consultadas el 2026-10-10/11, con
 de 6 fuentes el 2026-10-12 (ver sección 7). El checklist de 11 puntos de `discovery-research`
 (problema, usuarios, casos de uso, competidores, funcionalidades necesarias/opcionales, reglas de
 negocio, integraciones, restricciones, riesgos y preguntas abiertas) se conserva en
-`docs/discovery/checklist-11-puntos.md` (copia fiel de `discovery/discovery.md`).
+`docs/discovery/checklist-11-puntos.md` (copia fiel del checklist de 11 puntos de la Etapa 1).
 
 **Principales hallazgos.** (1) Nadie ocupa la intersección **"odontología pura + administración
 argentina"**: los dentales puros (Dentalink, Odentix) no integran obras sociales/ARCA/Mercado Pago, y
@@ -375,6 +375,7 @@ imagenología, excluido por no ser PMS) — https://dexis.com/es-es.
 **Actor del ecosistema (no competidor):** Consulmed — https://www.consulmed.com.ar/.
 
 **Documento de trabajo del equipo:** `desarrollo-active-stack.pdf` (Etapa 2, pp. 3–4; Entregables,
-pp. 7–8). **Fuentes históricas del repo:** `discovery/market-research-odontologia-AR.md`,
-`discovery/discovery.md` (checklist 11 puntos, copiado fiel en
-`docs/discovery/checklist-11-puntos.md`).
+pp. 7–8). **Fuentes históricas del repo (consolidadas en `docs/discovery/` el 2026-10-13):**
+`docs/discovery/market-research-odontologia-AR.md`,
+`docs/discovery/checklist-11-puntos.md` (checklist 11 puntos de la Etapa 1) +
+`docs/discovery/checklist-11-puntos.pdf` y `docs/discovery/market-research-odontologia-AR.pdf` (PDFs históricos).

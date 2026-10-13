@@ -145,7 +145,7 @@ def main():
         "Materia: Metodologia I - Trabajo de Integracion (SDD + Active Stack)",
         "Integrantes: A completar por el equipo (no consta en el repositorio)",
         "Fuentes originales: 2026-10-10 / 2026-10-11 - Verificacion: 2026-10-12",
-        "Stack: FastAPI + React + Postgres - Fuente historica: discovery/",
+        "Stack: FastAPI + React + Postgres - Fuente historica: docs/discovery/",
     ]:
         block(item, size=11, gap=0)
     pdf.ln(2)

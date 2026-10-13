@@ -1,7 +1,7 @@
 # Discovery — turnos-odontologia_cattaneo
 
 **Fecha**: 2026-10-10 (ajuste market research: 2026-10-11)
-**Fuentes investigadas**: 18 sistemas verificados (ver `discovery/market-research-odontologia-AR.md`, consulta 2026-10-10/11; solo sitios oficiales, precios, docs y reseñas; "No evidenciado" donde corresponde)
+**Fuentes investigadas**: 18 sistemas verificados (ver `docs/discovery/market-research-odontologia-AR.md`, consulta 2026-10-10/11; solo sitios oficiales, precios, docs y reseñas; "No evidenciado" donde corresponde)
 
 ## 1. Problema que resuelve
 
@@ -29,7 +29,7 @@ dobles reservas y tiempo perdido confirmando manualmente cada turno.
 
 La competencia a reemplazar sigue siendo el proceso actual: WhatsApp +
 papel/planilla. Además se investigaron 18 sistemas (informe completo en
-`discovery/market-research-odontologia-AR.md`, con matriz ponderada y análisis C–D):
+`docs/discovery/market-research-odontologia-AR.md`, con matriz ponderada y análisis C–D):
 
 | Competidor | Origen | Relevancia para el proyecto | Precio / modelo |
 |---|---|---|---|

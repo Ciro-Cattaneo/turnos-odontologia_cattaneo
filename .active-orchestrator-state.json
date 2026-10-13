@@ -8,75 +8,75 @@
     "competitors": [
       {
         "name": "Dentalink",
-        "notes_file": "discovery/market-research-odontologia-AR.md"
+        "notes_file": "docs/discovery/market-research-odontologia-AR.md"
       },
       {
         "name": "ClinIA",
-        "notes_file": "discovery/market-research-odontologia-AR.md"
+        "notes_file": "docs/discovery/market-research-odontologia-AR.md"
       },
       {
         "name": "DoctorYa",
-        "notes_file": "discovery/market-research-odontologia-AR.md"
+        "notes_file": "docs/discovery/market-research-odontologia-AR.md"
       },
       {
         "name": "ZynkMed",
-        "notes_file": "discovery/market-research-odontologia-AR.md"
+        "notes_file": "docs/discovery/market-research-odontologia-AR.md"
       },
       {
         "name": "Odentix",
-        "notes_file": "discovery/market-research-odontologia-AR.md"
+        "notes_file": "docs/discovery/market-research-odontologia-AR.md"
       },
       {
         "name": "MediTurn",
-        "notes_file": "discovery/market-research-odontologia-AR.md"
+        "notes_file": "docs/discovery/market-research-odontologia-AR.md"
       },
       {
         "name": "Medilink",
-        "notes_file": "discovery/market-research-odontologia-AR.md"
+        "notes_file": "docs/discovery/market-research-odontologia-AR.md"
       },
       {
         "name": "dt.dental",
-        "notes_file": "discovery/market-research-odontologia-AR.md"
+        "notes_file": "docs/discovery/market-research-odontologia-AR.md"
       },
       {
         "name": "AgendaPro",
-        "notes_file": "discovery/market-research-odontologia-AR.md"
+        "notes_file": "docs/discovery/market-research-odontologia-AR.md"
       },
       {
         "name": "Docturno",
-        "notes_file": "discovery/market-research-odontologia-AR.md"
+        "notes_file": "docs/discovery/market-research-odontologia-AR.md"
       },
       {
         "name": "Doctoralia",
-        "notes_file": "discovery/market-research-odontologia-AR.md"
+        "notes_file": "docs/discovery/market-research-odontologia-AR.md"
       },
       {
         "name": "Meducar",
-        "notes_file": "discovery/market-research-odontologia-AR.md"
+        "notes_file": "docs/discovery/market-research-odontologia-AR.md"
       },
       {
         "name": "DarTurnos",
-        "notes_file": "discovery/market-research-odontologia-AR.md"
+        "notes_file": "docs/discovery/market-research-odontologia-AR.md"
       },
       {
         "name": "Open Dental",
-        "notes_file": "discovery/market-research-odontologia-AR.md"
+        "notes_file": "docs/discovery/market-research-odontologia-AR.md"
       },
       {
         "name": "Dentrix",
-        "notes_file": "discovery/market-research-odontologia-AR.md"
+        "notes_file": "docs/discovery/market-research-odontologia-AR.md"
       },
       {
         "name": "Curve Dental",
-        "notes_file": "discovery/market-research-odontologia-AR.md"
+        "notes_file": "docs/discovery/market-research-odontologia-AR.md"
       },
       {
         "name": "NexHealth",
-        "notes_file": "discovery/market-research-odontologia-AR.md"
+        "notes_file": "docs/discovery/market-research-odontologia-AR.md"
       },
       {
         "name": "Fresha",
-        "notes_file": "discovery/market-research-odontologia-AR.md"
+        "notes_file": "docs/discovery/market-research-odontologia-AR.md"
       }
     ],
     "created_by": "discovery-research",
@@ -147,9 +147,9 @@
       "Recepción/Admin: CRUD completo de turnos (crea, edita, borra) y comprueba los datos del cliente para validar su validez."
     ],
     "sources_fetched_at": "2026-10-10/11",
-    "market_research_file": "discovery/market-research-odontologia-AR.md",
-    "market_research_pdf": "discovery/market-research-odontologia-AR.pdf",
-    "discovery_pdf": "discovery/discovery.pdf"
+    "market_research_file": "docs/discovery/market-research-odontologia-AR.md",
+    "market_research_pdf": "docs/discovery/market-research-odontologia-AR.pdf",
+    "discovery_pdf": "docs/discovery/checklist-11-puntos.pdf"
   },
   "owner": "active-orchestrator",
   "roadmap": {

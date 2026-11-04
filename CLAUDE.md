@@ -55,10 +55,19 @@ Fuente de verdad: `.atl/skill-registry.md` (generado por `skill-registry`). Fila
 | Backend Aux | Auth staff/RBAC, servicios, seguridad, notificaciones mail | `backend-development`, `supabase-postgres-best-practices` |
 | Frontend | React + Vite + React Router, mobile-first | `vercel-react-best-practices` |
 | Transversal (todos) | TDD + calidad de tests | `tdd-guide`, `test-guard` |
+| Transversal (specs) | Revisión de artefactos SDD de turnos (spec/design/tasks) | `turno-spec-review` |
 
 Cargá la skill correspondiente al contexto ANTES de escribir código.
 
+### Skill propia: turno-spec-review
+
+Se usa al preparar o revisar `proposal.md`, `design.md`, specs y `tasks.md` de los changes de turnos y agenda (C-05, C-06, C-07 y C-09), antes de proponer o implementar. Necesita como entradas la carpeta del change en `openspec/changes/<id>/`, la KB 04/05/06/07/10, el scope del change en `CHANGES.md` y las reglas duras; si falta la carpeta o un artefacto del change es hallazgo bloqueante y no se supone el contenido. Su salida se revisa así: tabla de hallazgos con `archivo:sección`, la RN-* o regla dura citada, corrección sugerida y severidad (bloqueante/mayor/menor), más el conteo de escenarios y el veredicto `LISTO`/`NO LISTO`; todo hallazgo debe citar una regla y traer corrección, y la skill es de solo lectura (no modifica artefactos). Vive versionada en `.opencode/skills/turno-spec-review/SKILL.md`.
+
 > Los compact rules de cada skill los resuelve el orquestador desde `.atl/skill-registry.md` (generado por `skill-registry`; versionado en el repo). Esta tabla solo mapea skill→rol.
+
+### MCP: Context7 (documentación del stack)
+
+Integración de solo lectura para consultar documentación vigente de FastAPI, Pydantic, SQLAlchemy y Alembic mediante las herramientas `resolve-library-id` y `query-docs`. Usalo antes de escribir código que dependa de las APIs de esas librerías o al preparar un change del backend (C-05 en adelante). Límites: no enviar datos de pacientes ni secretos (solo datos ficticios, Ley 25.326), no reemplaza la KB ni las reglas duras, y no se registra como skill porque es una integración. Config global en `C:\Users\ciroc\.config\opencode\opencode.json` (sección `mcp`); `opencode mcp list` debe mostrar `context7 connected`. Detalles en `README.md` §MCP.
 
 ---
 

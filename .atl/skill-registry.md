@@ -15,6 +15,7 @@ See `_shared/skill-resolver.md` for the full resolution protocol.
 | Designing APIs, implementing authentication, optimizing DB queries, CI/CD, security vulnerabilities, microservices, production-ready backend systems (Node/Python/Go/Rust, FastAPI, Postgres, REST/GraphQL/gRPC, OAuth/JWT) | backend-development | C:\Users\ciroc\.agents\skills\backend-development\SKILL.md |
 | Reviewing generated/changed test code before ship/commit/merge; write/add/review tests; PR diffs containing tests (pytest, PHPUnit/Pest, Jest/Vitest, Go) | test-guard | C:\Users\ciroc\.agents\skills\test-guard\SKILL.md |
 | Write tests, improve coverage, practice TDD, generate mocks/stubs, red-green-refactor (Jest, Pytest, JUnit, Vitest, Mocha) | tdd-guide | C:\Users\ciroc\.agents\skills\tdd-guide\SKILL.md |
+| Reviewing or drafting OpenSpec proposal/design/specs/tasks for turnos or agenda changes; detecting ambiguous rules, missing edge cases, untraceable requirements, unverifiable scenarios; before proposing or implementing | turno-spec-review | .opencode/skills/turno-spec-review/SKILL.md |
 
 ## Compact Rules
 
@@ -82,6 +83,16 @@ Pre-digested rules per skill. Delegators copy matching blocks into sub-agent pro
 - Mutation-test critical paths (auth, turnos overlap, cancel rules): target 85%+ mutation score; mutants surviving on `<` vs `<=` signal off-by-one gaps
 - Stop-and-ask: ambiguous AC, unknown boundary values, >50 tests, undocumented third-party behavior, security-sensitive flows (auth/payments) need sign-off
 - Traceability: number ACs in spec, reference number in test docstring (e.g. `# AC-3: ...`)
+
+### turno-spec-review
+- Required inputs before reviewing: the change folder (`proposal.md`, `design.md`, `tasks.md`, `specs/*/spec.md`), KB 04/05/06/07/10, the change scope in `CHANGES.md`, and the 12 hard rules in `AGENTS.md`; a missing change folder or any change artifact is a blocking finding — never infer its content
+- Mandatory requirement → RN-* mapping: every requirement must cite a knowledge-base rule (RN-TU/RN-AG/RN-NO/RN-AU) or a hard rule; anything unmapped is `regla no trazable`, do not interpret it
+- Minimum 3 scenarios per requirement (happy path, business error, edge) each declaring precondition, action and observable outcome (HTTP status, DB row/field, queued notification, audit field); an unverifiable outcome is `escenario no verificable`
+- Edge checklist that must appear in the spec: concurrent booking of same slot → 409 + DB exclusion (`EXCLUDE USING gist`/`SELECT FOR UPDATE`); invalid email → 400 only on that field, distinct from missing field; SMTP failure → booking still created, notification pending/failed with retries; `?token=` as the only patient credential with generic 403; cancellation under 3 h → 422 with exact `= 3 h` boundary defined
+- Classify findings as `ambigüedad`, `borde faltante`, `regla no trazable` or `escenario no verificable`, with severity `bloqueante` / `mayor` / `menor` justified by its definition
+- Output a findings table with ID, type, `archivo:sección` location, cited rule, finding, suggested correction and severity, plus scenario counts and a `LISTO` / `NO LISTO` verdict with its reason
+- Never invent rules, thresholds or states absent from the KB/`AGENTS.md`; never edit proposal/design/specs/tasks — the skill is read-only and corrections are suggested, not applied
+- Do not review already-written code or tests (that is `test-guard`/`tdd-guide`); use only fictitious data and never expose secrets, credentials or patient data
 
 ## Project Conventions
 

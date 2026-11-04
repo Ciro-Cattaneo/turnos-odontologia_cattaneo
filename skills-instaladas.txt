@@ -34,3 +34,13 @@ No instaladas (3, rechazadas por el usuario en el gate find-skill):
 
 10. terrylica/cc-skills@infra-deploy
    Rechazada por el usuario; deploy v1 es single-host Docker Compose simple (C-12), fuera de alcance fundacion.
+
+Skills propias (TP Skills + MCP) - 2026-11-02
+
+1. skill-creator
+   Skills de Anthropic, instalada global en C:\Users\ciroc\.config\opencode\skills\skill-creator\;
+   usada para generar la skill propia; los scripts de eval dependen del CLI `claude` y no se ejecutaron.
+
+2. turno-spec-review
+   Propia, versionada en .opencode/skills/turno-spec-review/SKILL.md;
+   revisa proposal/design/specs/tasks de changes de turnos y emite hallazgos trazados a RN-*/reglas duras con veredicto LISTO/NO LISTO.

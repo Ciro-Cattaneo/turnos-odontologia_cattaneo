@@ -75,6 +75,53 @@ Arranque local sin Docker (opcional, desde `backend/` con `.env` cargado):
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000  # salud: GET /api/health -> {"status": "ok"}, sin auth ni DB
 ```
 
+## MCP: Context7 (documentación del stack)
+
+Context7 es un servidor MCP remoto de solo lectura con documentación vigente y acotada de librerías. Acá se usa para consultar las APIs reales de FastAPI, Pydantic, SQLAlchemy y Alembic por versión antes de escribir código que dependa de ellas; por ejemplo, al preparar e implementar C-05 (`reserva-online-backend`).
+
+### Capacidades que se usan
+- `resolve-library-id`: resuelve el identificador de una librería a partir del nombre.
+- `query-docs`: consulta documentación acotada a una pregunta concreta sobre esa librería.
+- Solo lectura: no modifican el repo ni el entorno.
+
+### Cuándo usarlo
+- Antes de escribir código que dependa de APIs de FastAPI, Pydantic, SQLAlchemy o Alembic.
+- Al preparar un change del backend (C-05 en adelante) para validar firmas y comportamiento.
+- Para confirmar cambios de versión que la memoria del modelo pueda no reflejar.
+
+### Límites
+- No enviar datos de pacientes, secretos ni contenido de `.env`; solo datos ficticios (Ley 25.326).
+- No reemplaza la KB (`knowledge-base/`) ni las 12 reglas duras.
+- Una respuesta del MCP se contrasta antes de decidir; no es fuente de verdad por sí sola.
+
+### Requisitos y configuración
+Cliente opencode con soporte MCP remoto, HTTPS a `mcp.context7.com` y sin credenciales obligatorias (API key gratuita opcional). La configuración es **global y externa al repo**, en `C:\Users\ciroc\.config\opencode\opencode.json`:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "enabled": true
+    }
+  }
+}
+```
+
+Se puede llevar a un `opencode.json` en la raíz del repo para hacerla reproducible por proyecto; `opencode.jsonc` no se usa para esta config.
+
+### Verificación
+`opencode mcp list` debe mostrar dos servidores `connected` (`context7` y `engram`). Prueba de herramienta (2026-11-02): resolver `FastAPI` devuelve `/websites/fastapi_tiangolo` y `query-docs` sobre ese id responde con documentación de `EmailStr` y errores de validación de Pydantic.
+
+### Problemas conocidos
+- `NativeCommandError` en PowerShell 5.1: el shim `opencode.ps1` escribe parte de la salida por stderr y PowerShell lo marca en rojo aunque el comando termine bien; no es un fallo de conexión. Invocar `opencode.exe` directamente o ignorar ese stream.
+- 429 por límite sin API key: definir `CONTEXT7_API_KEY` como variable de entorno y referenciarla en `headers` como `{env:CONTEXT7_API_KEY}`.
+- Si el servidor no aparece, confirmar que la entrada está en `opencode.json` y reiniciar la sesión del agente.
+
+El MCP se documenta como integración; no se registra como skill en `.atl/skill-registry.md`. Engram también está configurado (memoria persistente), pero la integración documentada para este TP es Context7.
+
 ## Docker (PENDING en este host)
 
 Ruta primaria cuando haya Docker Desktop (servicios `web`+`db` Postgres 16;
@@ -102,6 +149,8 @@ frontend/           # React 18 + Vite 5 + React Router: src/{features,shared,pag
 docker-compose.yml  # web (8000) + db (Postgres 16); worker/redis comentados
 .env.example        # 13 vars KB-08 + REDIS_URL opcional comentada (placeholders ficticios)
 docs/discovery/     # informe de discovery previo
+docs/skills-mcp/    # ficha de investigación e informe del TP (skill propia + MCP)
+.opencode/skills/   # skills propias versionadas (turno-spec-review)
 knowledge-base/     # fuente de verdad del dominio (01-10 + README)
 openspec/           # changes (activos + archive/2026-10-12-c-01-foundation-setup)
 CHANGES.md          # índice canónico de changes C-01..C-12

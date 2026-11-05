@@ -161,8 +161,8 @@ Rama near-critical de operación (recepción no puede trabajar sin ella):
   - `knowledge-base/07_flujos_principales.md` §Flujo 1 (pasos 1-2)
 
 ### [C-05] `reserva-online-backend`
-- **Estado**: `[ ]` pendiente
-- **Change preparado**: `openspec/changes/c-05-reserva-online-backend/` — planificación completa (proposal, design con 13 decisiones, 9 requirements / 42 escenarios, 37 tareas TDD), pendiente de implementar.
+- **Estado**: `[x]` completado
+- **Archivado**: `openspec/changes/archive/2026-11-05-c-05-reserva-online-backend/` — implementado y verificado (335 tests, ruff limpio); 9 requirements / 42 escenarios sincronizados a `openspec/specs/reserva-online/spec.md`.
 - **Scope**:
   - `POST /api/turnos` (público, rate-limited): body `{profesional_id, inicio, duracion_min?, paciente:{nombre, dni, telefono, obra_social, email}}`; validación Pydantic (los 5 obligatorios — mail OBLIGATORIO con formato válido; ✅ GATE 2026-10-11 PB-02: RN-TU-01 cambia, email required + valid format else 400 en ese campo)
   - Transacción: lock por profesional+slot (`SELECT FOR UPDATE` o exclusión PG), upsert `Paciente` por `dni`, crea `Turno reservado` con `fin=inicio+duración`, `token_cancelacion` (✅ GATE PB-01: token por turno only, única credencial paciente), `origen=online`, encola `Notificacion confirmacion` (siempre — toda reserva tiene mail) + recordatorios 24h/2h, escribe `AuditoriaTurno`

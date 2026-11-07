@@ -179,7 +179,7 @@ Rama near-critical de operación (recepción no puede trabajar sin ella):
   - `knowledge-base/10_preguntas_abiertas.md` §PB-01, §PB-02
 
 ### [C-06] `cancelacion-paciente-backend`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado y archivado (2026-11-07) — ver `openspec/changes/archive/2026-11-07-c-06-cancelacion-paciente-backend/`; 39/39 tareas, 438 tests, ruff limpio.
 - **Scope**:
   - `DELETE /api/turnos/{id}` paciente: ÚNICA credencial `token_cancelacion` (query `?token=`). ✅ GATE 2026-10-11 PB-01 FINAL: solo `?token=`, sin DNI+tel, sin "mis turnos".
   - Regla `inicio - now() >= CANCEL_HOURS_MIN (3)`: ok → `estado=cancelado` + slot liberado + encola mail cancelación + audita; `<3h` → `422` + mensaje y contacto del consultorio

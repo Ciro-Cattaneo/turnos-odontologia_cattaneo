@@ -13,3 +13,4 @@ ruff>=0.8
 argon2-cffi>=25.1
 PyJWT>=2.10
 email-validator>=2.0
+apscheduler>=3.10,<4

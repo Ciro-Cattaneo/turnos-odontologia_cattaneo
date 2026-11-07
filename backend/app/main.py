@@ -1,6 +1,7 @@
 """Punto de entrada FastAPI (monolito modular, KB-08)."""
 
 import sys
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -13,6 +14,7 @@ from app.modules.auth.router import router as auth_router
 from app.modules.bloqueos.router import router as bloqueos_router
 from app.modules.disponibilidades.router import router as disponibilidades_router
 from app.modules.notificaciones.router import router as notificaciones_router
+from app.modules.notificaciones.scheduler import crear_scheduler
 from app.modules.pacientes.router import router as pacientes_router
 from app.modules.profesionales.router import router as profesionales_router
 from app.modules.reportes.router import router as reportes_router
@@ -24,7 +26,25 @@ except RuntimeError as exc:
     print(f"error: {exc}", file=sys.stderr)
     raise SystemExit(1) from exc
 
-app = FastAPI(title="Turnos Odontología Cattaneo")
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Arranca/para el worker en-proceso según `NOTIF_WORKER_ENABLED` (D-7)."""
+    actuales = get_settings()
+    scheduler = None
+    if actuales.NOTIF_WORKER_ENABLED:
+        scheduler = crear_scheduler(
+            intervalo_min=actuales.NOTIF_WORKER_INTERVAL_MIN
+        )
+        scheduler.start()
+    try:
+        yield
+    finally:
+        if scheduler is not None:
+            scheduler.shutdown(wait=False)
+
+
+app = FastAPI(title="Turnos Odontología Cattaneo", lifespan=lifespan)
 
 for router in (
     turnos_router,

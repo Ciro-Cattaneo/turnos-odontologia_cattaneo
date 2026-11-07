@@ -6,12 +6,12 @@ para TODOS los schemas de API. `forbid` aquí rompería el boot ante
 cualquier variable ajena exportada por el host/CI.
 """
 
-from pydantic import ValidationError
+from pydantic import ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """13 vars KB-08 + `REDIS_URL` opcional (PB-03, solo documentada)."""
+    """13 vars KB-08 + `REDIS_URL` y las 4 vars del worker (PB-03/D-11)."""
 
     model_config = SettingsConfigDict(extra="ignore", env_file=".env")
 
@@ -29,15 +29,41 @@ class Settings(BaseSettings):
     CANCEL_HOURS_MIN: int = 3
     SLOT_DEFAULT_MIN: int = 30
     REDIS_URL: str | None = None
+    SMTP_TIMEOUT_S: int = 15
+    NOTIF_WORKER_ENABLED: bool = True
+    NOTIF_WORKER_INTERVAL_MIN: int = 5
+    NOTIF_WORKER_BATCH_SIZE: int = 20
+
+    @field_validator("NOTIF_WORKER_INTERVAL_MIN")
+    @classmethod
+    def _intervalo_valido(cls, value: int) -> int:
+        """D-11: el loop del worker solo admite 5–10 minutos."""
+        if not 5 <= value <= 10:
+            raise ValueError(
+                "NOTIF_WORKER_INTERVAL_MIN debe estar entre 5 y 10 "
+                f"minutos (recibido: {value})"
+            )
+        return value
 
 
 def get_settings() -> Settings:
-    """Construye `Settings` con fail-fast que nombra la(s) faltante(s)."""
+    """Construye `Settings` con fail-fast claro (faltantes o inválidas)."""
     try:
         return Settings()
     except ValidationError as exc:
+        errores = exc.errors()
         missing = sorted(
-            {str(loc) for err in exc.errors() for loc in err["loc"] if loc}
+            {
+                str(loc)
+                for err in errores
+                if err.get("type") == "missing"
+                for loc in err["loc"]
+                if loc
+            }
         )
-        names = ", ".join(missing) if missing else exc.title
-        raise RuntimeError(f"Missing required env var(s): {names}") from exc
+        if missing:
+            raise RuntimeError(
+                f"Missing required env var(s): {', '.join(missing)}"
+            ) from exc
+        detalle = "; ".join(err.get("msg", "valor inválido") for err in errores)
+        raise RuntimeError(f"Invalid configuration: {detalle}") from exc

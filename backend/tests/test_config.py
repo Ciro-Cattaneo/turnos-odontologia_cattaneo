@@ -24,10 +24,18 @@ REQUIRED_ENV = {
     "FRONTEND_URL": "https://turnos.ficticio.test",
 }
 
+WORKER_ENV = [
+    "SMTP_TIMEOUT_S",
+    "NOTIF_WORKER_ENABLED",
+    "NOTIF_WORKER_INTERVAL_MIN",
+    "NOTIF_WORKER_BATCH_SIZE",
+]
+
 MANAGED_KEYS = list(REQUIRED_ENV) + [
     "CANCEL_HOURS_MIN",
     "SLOT_DEFAULT_MIN",
     "REDIS_URL",
+    *WORKER_ENV,
 ]
 
 
@@ -118,3 +126,28 @@ def test_redis_url_opcional_default_none(clean_env):
 
     clean_env.setenv("REDIS_URL", "redis://redis:6379/0")
     assert get_settings().REDIS_URL == "redis://redis:6379/0"
+
+
+def test_config_worker_defaults_aplican(clean_env):
+    """D-11: timeout SMTP y worker arrancan con defaults operativos."""
+    _load_full_env(clean_env)
+
+    settings = get_settings()
+
+    assert settings.SMTP_TIMEOUT_S == 15
+    assert settings.NOTIF_WORKER_ENABLED is True
+    assert settings.NOTIF_WORKER_INTERVAL_MIN == 5
+    assert settings.NOTIF_WORKER_BATCH_SIZE == 20
+
+
+@pytest.mark.parametrize("valor", ["4", "11", "0"], ids=["bajo", "alto", "cero"])
+def test_config_intervalo_fuera_de_rango_falla(clean_env, valor):
+    """D-11: intervalo del worker fuera de 5–10 → error claro al boot."""
+    _load_full_env(clean_env)
+    clean_env.setenv("NOTIF_WORKER_INTERVAL_MIN", valor)
+
+    with pytest.raises(RuntimeError) as exc_info:
+        get_settings()
+
+    assert "NOTIF_WORKER_INTERVAL_MIN" in str(exc_info.value)
+    assert "5" in str(exc_info.value) and "10" in str(exc_info.value)

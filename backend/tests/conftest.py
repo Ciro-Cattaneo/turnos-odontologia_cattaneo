@@ -34,6 +34,9 @@ os.environ.setdefault("SMTP_PASS", "pass-ficticia-solo-tests")
 os.environ.setdefault("SMTP_FROM", "turnos@ficticio.test")
 os.environ.setdefault("TZ", "America/Argentina/Buenos_Aires")
 os.environ.setdefault("FRONTEND_URL", "https://turnos.ficticio.test")
+# El scheduler del worker nunca arranca en la suite (D-7): los tests de
+# notificaciones llaman a `run_once` directo, sin hilos reales.
+os.environ["NOTIF_WORKER_ENABLED"] = "false"
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 TEST_DB_NAME = "turnos_test"

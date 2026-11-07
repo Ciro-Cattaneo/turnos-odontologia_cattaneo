@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     FRONTEND_URL: str
     CANCEL_HOURS_MIN: int = 3
     SLOT_DEFAULT_MIN: int = 30
+    CONSULTORIO_CONTACTO: str = (
+        "Comunicate con el consultorio para coordinar la cancelación"
+    )
     REDIS_URL: str | None = None
     SMTP_TIMEOUT_S: int = 15
     NOTIF_WORKER_ENABLED: bool = True

@@ -88,6 +88,20 @@ class TurnoOut(BaseModel):
     notificaciones_encoladas: bool
 
 
+class CancelacionOut(BaseModel):
+    """Respuesta `200` de cancelación: solo campos públicos (C-06 D-11)."""
+
+    model_config = Forbid
+
+    id: UUID
+    estado: str
+    inicio: str
+    fin: str
+    duracion_min: int
+    notificaciones_encoladas: bool
+    mensaje: str
+
+
 class AlternativoOut(BaseModel):
     """Slot alternativo del mismo día local."""
 

@@ -214,7 +214,7 @@ Rama near-critical de operación (recepción no puede trabajar sin ella):
 ## FASE 3 — Notificaciones (worker mail)
 
 ### [C-08] `notificaciones-mail-worker`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado y archivado (2026-11-07) — ver `openspec/changes/archive/2026-11-07-c-08-notificaciones-mail-worker/`; 34/34 tareas, 400 tests, ruff limpio.
 - **Scope**:
   - Encolado: `confirmacion` inmediata al reservar SIEMPRE (toda reserva tiene mail — ✅ GATE 2026-10-11 PB-02); `recordatorio_24h` y `recordatorio_2h` programados (solo si la anticipación lo permite; cada mail incluye link `GET /cancelar?token=`). Sin fallback "sin mail → sin notificaciones".
   - Worker APScheduler en-proceso, loop single-process cada 5–10 min (✅ GATE 2026-10-11 PB-03 FINAL, DD-05/SU-03); `REDIS_URL` solo documentada, sin servicio Redis día 1.

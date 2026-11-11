@@ -64,6 +64,44 @@ describe("frontend shell", () => {
     expect(fixedWidths.every((w) => w <= 360)).toBe(true);
   });
 
+  it("test_ruta_reservar_renderiza_pagina", async () => {
+    // # AC frontend-shell/S5 — /reservar registrada y renderiza la página
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({ items: [], next_cursor: null }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+      ),
+    );
+
+    renderAt("/reservar");
+
+    expect(
+      await screen.findByRole("heading", { name: /reservar turno/i }),
+    ).toBeDefined();
+    expect(screen.getByText(/no hay profesionales disponibles/i)).toBeDefined();
+    vi.unstubAllGlobals();
+  });
+
+  it("test_ruta_cancelar_renderiza_pagina", () => {
+    // # AC frontend-shell/S5 — /cancelar registrada y renderiza la página
+    renderAt(
+      "/cancelar?token=33333333-3333-4333-8333-333333333333&id=22222222-2222-4222-8222-222222222222",
+    );
+
+    expect(
+      screen.getByRole("heading", { name: /cancelar turno/i }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: /confirmar cancelación/i }),
+    ).toBeDefined();
+  });
+
   it("test_backend_caido_devuelve_error_tipado", async () => {
     // # AC frontend-shell/S4 — red caída (frontera HTTP: mock justificado)
     vi.stubGlobal(

@@ -89,3 +89,6 @@ def test_reserva_confirmacion_se_envia_en_el_siguiente_ciclo(db_session):
     assert turno.estado.value == "reservado"
     assert turno.inicio == datetime(2026, 10, 19, 12, 0, tzinfo=UTC)
     assert turno.fin == turno.inicio + timedelta(minutes=30)
+    assert confirmacion.payload["cancel_url"].endswith(
+        f"/cancelar?token={respuesta['token_cancelacion']}&id={respuesta['id']}"
+    )

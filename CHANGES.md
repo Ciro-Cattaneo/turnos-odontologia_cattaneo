@@ -194,7 +194,7 @@ Rama near-critical de operación (recepción no puede trabajar sin ella):
   - `knowledge-base/10_preguntas_abiertas.md` §PB-01
 
 ### [C-07] `crud-recepcion-backend`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado y archivado (2026-11-09) - ver `openspec/changes/archive/2026-11-09-c-07-crud-recepcion-backend/`
 - **Scope**:
   - Staff (auth): `POST /api/turnos` con `origen=recepcion` (mismos obligatorios que online), `PUT /api/turnos/{id}` (reprogramar/cambiar duración, valida anti-solape igual que online), `DELETE /api/turnos/{id}` staff (borrado = `cancelado`, no DELETE físico)
   - Forzar cancelación `<3h` solo rol recepción/admin: UI exige motivo → `AuditoriaTurno(forzar_cancelacion, motivo, actor)`

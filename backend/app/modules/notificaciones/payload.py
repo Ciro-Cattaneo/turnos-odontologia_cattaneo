@@ -26,6 +26,7 @@ REQUIRED_KEYS: tuple[str, ...] = (
 PREFIJO_SMTP = "smtp:"
 PREFIJO_PAYLOAD_INCOMPLETO = "payload_incompleto:"
 PREFIJO_TURNO_CANCELADO = "turno_cancelado:"
+PREFIJO_TURNO_REPROGRAMADO = "turno_reprogramado:"
 
 _MAX_DETALLE = 200
 
@@ -129,8 +130,16 @@ def motivo_turno_cancelado(estado: str) -> str:
     return f"{PREFIJO_TURNO_CANCELADO} {_acotar(estado)}"
 
 
+def motivo_turno_reprogramado(detalle: str) -> str:
+    """Motivo de descarte por reprogramación (C-07 D-10)."""
+    return f"{PREFIJO_TURNO_REPROGRAMADO} {_acotar(detalle)}"
+
+
 def clasificar_error(error: str | None) -> str:
     """Clasifica `error` en `descarte` (obsoleto) o `fallo` (envío/payload)."""
-    if error and error.startswith(PREFIJO_TURNO_CANCELADO):
+    if error and (
+        error.startswith(PREFIJO_TURNO_CANCELADO)
+        or error.startswith(PREFIJO_TURNO_REPROGRAMADO)
+    ):
         return "descarte"
     return "fallo"

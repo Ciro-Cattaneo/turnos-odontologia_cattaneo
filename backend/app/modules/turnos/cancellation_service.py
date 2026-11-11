@@ -77,7 +77,7 @@ def _payload(
         "fin": _iso_utc(_utc(turno.fin)),
         "duracion_min": turno.duracion_min,
         "token_cancelacion": str(turno.token_cancelacion),
-        "cancel_url": _cancel_url(turno.token_cancelacion),
+        "cancel_url": _cancel_url(turno.token_cancelacion, turno.id),
     }
 
 

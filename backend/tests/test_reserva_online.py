@@ -390,7 +390,9 @@ def test_reserva_devuelve_token_y_cancel_url_normalizada(
     assert resp.status_code == 201
     cuerpo = resp.json()
     token = uuid.UUID(cuerpo["token_cancelacion"])
-    assert cuerpo["cancel_url"] == f"https://app.test/cancelar?token={token}"
+    assert cuerpo["cancel_url"] == (
+        f"https://app.test/cancelar?token={token}&id={cuerpo['id']}"
+    )
     assert cuerpo["notificaciones_encoladas"] is True
 
 

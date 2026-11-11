@@ -119,3 +119,18 @@ def test_motivo_smtp_se_clasifica_fallo():
     assert payload.startswith("payload_incompleto:")
     assert clasificar_error(smtp) == "fallo"
     assert clasificar_error(payload) == "fallo"
+
+
+def test_notif_clasifica_turno_reprogramado_como_descarte():
+    """C-07 D-10: el prefijo de reprogramación es descarte, no fallo."""
+    from app.modules.notificaciones.payload import (
+        clasificar_error,
+        motivo_turno_reprogramado,
+    )
+
+    motivo = motivo_turno_reprogramado(
+        "inicio 2026-10-19T12:00:00+00:00 -> 2026-10-19T14:00:00+00:00"
+    )
+
+    assert motivo.startswith("turno_reprogramado:")
+    assert clasificar_error(motivo) == "descarte"

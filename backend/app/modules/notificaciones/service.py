@@ -28,7 +28,8 @@ _SQL_BASE = text(
     JOIN turno AS t ON t.id = n.turno_id
     WHERE n.estado = 'fallida'
       AND n.canal = 'mail'
-      AND (n.error IS NULL OR n.error NOT LIKE 'turno_cancelado:%')
+      AND (n.error IS NULL OR n.error NOT LIKE 'turno_cancelado:%'
+           AND n.error NOT LIKE 'turno_reprogramado:%')
     ORDER BY t.inicio DESC, n.id DESC
     LIMIT :limite
     """
@@ -50,7 +51,8 @@ _SQL_CURSOR = text(
     JOIN turno AS t ON t.id = n.turno_id
     WHERE n.estado = 'fallida'
       AND n.canal = 'mail'
-      AND (n.error IS NULL OR n.error NOT LIKE 'turno_cancelado:%')
+      AND (n.error IS NULL OR n.error NOT LIKE 'turno_cancelado:%'
+           AND n.error NOT LIKE 'turno_reprogramado:%')
       AND (t.inicio, n.id) < (
           CAST(:cursor_inicio AS timestamptz),
           CAST(:cursor_id AS uuid)

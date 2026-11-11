@@ -5,7 +5,10 @@
 
 import pytest
 
-CANCEL_URL = "https://turnos.ficticio.test/cancelar?token=22222222"
+CANCEL_URL = (
+    "https://turnos.ficticio.test/cancelar"
+    "?token=22222222&id=11111111-1111-4111-8111-111111111111"
+)
 
 
 def _valido(tipo="recordatorio_24h", **over):

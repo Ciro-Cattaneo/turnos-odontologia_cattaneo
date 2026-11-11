@@ -72,6 +72,12 @@ The system SHALL NOT send `confirmacion`, `recordatorio_24h` or `recordatorio_2h
 - **CUANDO** corre un ciclo del worker
 - **ENTONCES** no se envía ningún mail y la notificación se descarta con motivo `turno_cancelado` (RN-NO-01, Flujo 4)
 
+#### Scenario: Notificación ya descartada por reprogramación no se reenvía
+
+- **DADO** una `Notificacion` de tipo `confirmacion` que quedó `fallida` con `error="turno_reprogramado: ..."` tras una reprogramación, y un turno que sigue `reservado`
+- **CUANDO** corre un ciclo del worker
+- **ENTONCES** el worker no la toma (ya no está `pendiente`), no se envía ningún mail viejo y `intentos` sigue intacto (RN-NO-01)
+
 ### Requirement: Mail de cancelación se envía aunque el turno esté cancelado
 
 The system SHALL send a `cancelacion` notification even when its turno is `cancelado`, because it is enqueued by the cancellation flow after the state change. The active-turno filter SHALL apply only to confirmation and reminder types. (RN-NO-01, Flujo 2 paso 3.)
@@ -100,13 +106,19 @@ The system SHALL require `turno_id`, `tipo`, `enviar_en`, `paciente_nombre`, `pa
 
 ### Requirement: Panel staff de notificaciones fallidas
 
-The system SHALL expose `GET /api/notificaciones/fallidas` to `recepcion` and `admin` only, returning only SMTP/`payload_incompleto` failures (not discarded ones), ordered by turno start descending with an opaque keyset cursor. It SHALL return `id`, `turno_id`, `tipo`, `intentos`, `error`, `enviar_en`, `paciente_nombre`, `paciente_email`, `inicio` and `fin` per item, and SHALL reject unknown query fields or invalid cursors with `400` per field. (RN-NO-02, duro 1, duro 7.)
+The system SHALL expose `GET /api/notificaciones/fallidas` to `recepcion` and `admin` only, returning only SMTP/`payload_incompleto` failures (not discarded ones, including `turno_cancelado:` and `turno_reprogramado:`), ordered by turno start descending with an opaque keyset cursor. It SHALL return `id`, `turno_id`, `tipo`, `intentos`, `error`, `enviar_en`, `paciente_nombre`, `paciente_email`, `inicio` and `fin` per item, and SHALL reject unknown query fields or invalid cursors with `400` per field. (RN-NO-02, duro 1, duro 7.)
 
 #### Scenario: Recepción lista fallidas con paginación keyset
 
 - **DADO** tres notificaciones `fallida` por SMTP de turnos con inicios distintos y una `fallida` por `turno_cancelado`
 - **CUANDO** un usuario `recepcion` pide `GET /api/notificaciones/fallidas?limit=2`
 - **ENTONCES** responde `200` con dos items ordenados por inicio de turno descendente, `next_cursor` no nulo y sin incluir la descartada; al pedir el cursor devuelve el item restante y `next_cursor=null` (RN-NO-02, duro 7)
+
+#### Scenario: Las fallidas por reprogramación no aparecen en el panel
+
+- **DADO** dos notificaciones `fallida`: una por SMTP y otra con `error="turno_reprogramado: 2026-11-08T12:00:00Z"` de un turno que sigue activo
+- **CUANDO** un usuario `recepcion` pide `GET /api/notificaciones/fallidas`
+- **ENTONCES** responde `200` y devuelve solo la fallida SMTP; la descartada por reprogramación queda excluida (RN-NO-02, C-07)
 
 #### Scenario: Odontólogo no accede al panel de fallidas
 
@@ -201,3 +213,31 @@ The system SHALL emit one structured log entry per sent, retried, discarded and 
 - **DADO** una `Notificacion` vencida y un borde SMTP que falla
 - **CUANDO** corre un ciclo del worker
 - **ENTONCES** se emite un log con resultado `reintento` o `fallida` y el motivo, sin `SMTP_PASS` ni datos sensibles, y el ciclo termina normalmente (RN-NO-02)
+
+### Requirement: Descarte de notificaciones obsoletas por reprogramación
+
+The system SHALL provide a way to discard the pending `confirmacion`, `recordatorio_24h` and `recordatorio_2h` notifications of a turno when it is rescheduled, marking them `fallida` with an `error` prefixed `turno_reprogramado:` WITHOUT incrementing `intentos` and WITHOUT calling SMTP. It SHALL classify that prefix as a discard (not an SMTP failure) so discarded rows never reach the failed-notifications panel. (RN-NO-01, RN-NO-02, duro 5, C-07.)
+
+#### Scenario: El prefijo turno_reprogramado se clasifica como descarte
+
+- **DADO** una `Notificacion` `fallida` con `error="turno_reprogramado: inicio 2026-11-08T12:00:00Z -> 2026-11-09T12:00:00Z"`
+- **CUANDO** el servicio de notificaciones clasifica el error
+- **ENTONCES** devuelve la categoría de descarte, no la de fallo SMTP, y el panel de fallidas la excluye (RN-NO-02)
+
+#### Scenario: Descartar pendientes no altera intentos ni invoca SMTP
+
+- **DADO** un turno con una `confirmacion` y dos recordatorios `pendiente`, todos con `intentos=0`
+- **CUANDO** se ejecuta el descarte por reprogramación
+- **ENTONCES** las tres filas quedan `fallida` con `error` que empieza con `turno_reprogramado:`, `intentos` sigue en `0` y no se llamó a SMTP (RN-NO-01, duro 5)
+
+#### Scenario: El descarte no afecta notificaciones de otros turnos
+
+- **DADO** dos turnos, cada uno con notificaciones `pendiente`
+- **CUANDO** se reprograma uno de ellos
+- **ENTONCES** solo las notificaciones del turno reprogramado quedan `fallida` con `turno_reprogramado:`; las del otro turno siguen `pendiente` (RN-NO-02)
+
+#### Scenario: Una notificación enviada nunca se marca fallida por reprogramación
+
+- **DADO** una `Notificacion` con `estado=enviada` del turno a reprogramar
+- **CUANDO** se ejecuta el descarte
+- **ENTONCES** la fila `enviada` permanece intacta; el descarte solo toca filas `pendiente` (RN-NO-02)

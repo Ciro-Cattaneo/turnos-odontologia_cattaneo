@@ -308,3 +308,21 @@ def test_openapi_incluye_endpoint_fallidas():
     paths = app.openapi()["paths"]
     assert "/api/notificaciones/fallidas" in paths
     assert "get" in paths["/api/notificaciones/fallidas"]
+
+
+def test_panel_fallidas_excluye_reprogramadas(client, db_session, staff):
+    """C-07 D-10: los descartes por reprogramación no son fallos del panel."""
+    smtp = _fallida(db_session, inicio=BASE + timedelta(hours=1))
+    reprogramada = _fallida(
+        db_session,
+        inicio=BASE + timedelta(hours=2),
+        error="turno_reprogramado: inicio movido",
+    )
+    _login(client, "recepcion@ficticio.test")
+
+    response = client.get("/api/notificaciones/fallidas")
+
+    assert response.status_code == 200
+    ids = {item["id"] for item in response.json()["items"]}
+    assert str(smtp.id) in ids
+    assert str(reprogramada.id) not in ids

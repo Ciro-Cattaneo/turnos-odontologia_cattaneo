@@ -802,7 +802,7 @@ def test_cancelacion_encola_mail_cancelacion_pendiente(client, db_session):
     assert payload["token_cancelacion"] == str(turno.token_cancelacion)
     assert payload["duracion_min"] == 30
     assert payload["cancel_url"].endswith(
-        f"/cancelar?token={turno.token_cancelacion}"
+        f"/cancelar?token={turno.token_cancelacion}&id={turno.id}"
     )
     enviar_en = payload["enviar_en"]
     assert isinstance(enviar_en, str)

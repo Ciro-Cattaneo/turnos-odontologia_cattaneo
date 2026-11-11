@@ -236,7 +236,7 @@ Rama near-critical de operación (recepción no puede trabajar sin ella):
 ## FASE 4 — Frontend (público + staff)
 
 ### [C-09] `frontend-reserva-publica`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado y archivado (2026-11-11) - ver `openspec/changes/archive/2026-11-11-c-09-frontend-reserva-publica/`; 49/49 tareas, 72 tests frontend (Vitest) + 551 tests backend (pytest), `npx tsc -b` sin errores y `npm run build` OK.
 - **Scope**:
   - `GET /` landing + `GET /reservar` (buscador por profesional/fecha, lista de slots <2s en 4G, no muestra bloqueados/ocupados)
   - Form reserva (nombre+DNI+tel+OS+mail, los 5 obligatorios — ✅ GATE 2026-10-11 PB-02): 400 con campo marcado; éxito → resumen + link cancelación (confirmación+recordatorios siempre encolados, sin aviso "sin mail").

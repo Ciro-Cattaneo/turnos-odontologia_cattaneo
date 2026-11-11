@@ -190,7 +190,7 @@ The system SHALL build each mail with a subject and body per notification type c
 
 - **DADO** una `Notificacion` válida de tipo `recordatorio_24h` con `payload.inicio` en UTC
 - **CUANDO** el worker construye y envía el mail
-- **ENTONCES** el asunto y el cuerpo están en español, incluyen la hora local de Buenos Aires, el nombre del profesional y `payload.cancel_url` como link `GET /cancelar?token=` (RN-NO-01, PB-01)
+- **ENTONCES** el asunto y el cuerpo están en español, incluyen la hora local de Buenos Aires, el nombre del profesional y `payload.cancel_url` como link `GET /cancelar?token=<token>&id=<id>`, donde `token` es la única credencial y `id` es el localizador opaco del turno (RN-NO-01, PB-01, duro 4)
 
 #### Scenario: Mail no incluye datos sensibles innecesarios
 

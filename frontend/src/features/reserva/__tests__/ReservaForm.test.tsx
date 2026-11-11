@@ -158,4 +158,69 @@ describe("ReservaForm", () => {
     expect(screen.queryByText(/reserva confirmada/i)).toBeNull();
     expect(screen.getByRole("form")).toBeDefined();
   });
+
+  it("test_formulario_campos_con_etiqueta", () => {
+    render(<ReservaForm slot={slot} submitting={false} onSubmit={vi.fn()} />);
+
+    const campos: Array<[string, string]> = [
+      ["nombre", "Nombre y apellido"],
+      ["dni", "DNI"],
+      ["telefono", "Teléfono"],
+      ["obra_social", "Obra social"],
+      ["email", "Email"],
+    ];
+    for (const [id, etiqueta] of campos) {
+      const input = screen.getByLabelText(etiqueta) as HTMLInputElement;
+      expect(input.id).toBe(id);
+      expect(input.getAttribute("aria-required")).toBe("true");
+      const label = screen.getByText(etiqueta);
+      expect(label.tagName).toBe("LABEL");
+      expect(label.getAttribute("for")).toBe(id);
+    }
+  });
+
+  it("test_formulario_errores_anunciados", () => {
+    render(<ReservaForm slot={slot} submitting={false} onSubmit={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /confirmar reserva/i }));
+
+    const campos = ["nombre", "dni", "telefono", "obra_social", "email"];
+    for (const id of campos) {
+      const input = document.getElementById(id) as HTMLInputElement;
+      expect(input.getAttribute("aria-invalid")).toBe("true");
+      const errorId = input.getAttribute("aria-describedby");
+      expect(errorId).toBe(`${id}-error`);
+      const error = document.getElementById(`${id}-error`);
+      expect(error).not.toBeNull();
+      expect(error?.getAttribute("role")).toBe("alert");
+    }
+    expect(screen.getAllByRole("alert")).toHaveLength(campos.length);
+  });
+
+  it("test_formulario_orden_dom_y_aria", () => {
+    // La verificación manual de `:focus-visible` queda fuera del test: no se
+    // instala `user-event`; se revisa en navegador con Tab.
+    render(<ReservaForm slot={slot} submitting={false} onSubmit={vi.fn()} />);
+
+    const form = screen.getByRole("form", { name: "Formulario de reserva" });
+    expect(form.tagName).toBe("FORM");
+
+    const orden = screen
+      .getAllByRole("textbox")
+      .map((input) => input.getAttribute("id"));
+    expect(orden).toEqual(["nombre", "dni", "telefono", "obra_social", "email"]);
+
+    const leyenda = screen.getByText("Datos del paciente");
+    expect(leyenda.tagName).toBe("LEGEND");
+    expect(
+      leyenda.compareDocumentPosition(document.getElementById("nombre") ?? leyenda) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+
+    const enviar = screen.getByRole("button", { name: /confirmar reserva/i });
+    const email = screen.getByLabelText("Email");
+    expect(
+      email.compareDocumentPosition(enviar) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
 });

@@ -14,7 +14,6 @@ import {
   RouterProvider,
   Routes,
   useLocation,
-  type Router,
 } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -101,7 +100,9 @@ function Ubicacion(): JSX.Element {
   return <output data-testid="ubicacion">{location.pathname}</output>;
 }
 
-function renderApp(path: string): Router {
+type MemoryRouterInstance = ReturnType<typeof createMemoryRouter>;
+
+function renderApp(path: string): MemoryRouterInstance {
   const router = createMemoryRouter(
     [
       { path: "/", element: <Home /> },

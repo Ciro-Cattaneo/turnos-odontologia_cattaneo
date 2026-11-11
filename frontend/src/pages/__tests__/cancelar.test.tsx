@@ -1,11 +1,7 @@
 /** Cancelación por token (capa: integración, fetch mockeado en el borde). */
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import {
-  createMemoryRouter,
-  RouterProvider,
-  type Router,
-} from "react-router-dom";
+import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Cancelar } from "../Cancelar";
@@ -50,7 +46,9 @@ function urlCancelar(params: Record<string, string>): string {
   return `/cancelar?${search}`;
 }
 
-function renderCancel(params: Record<string, string>): Router {
+type MemoryRouterInstance = ReturnType<typeof createMemoryRouter>;
+
+function renderCancel(params: Record<string, string>): MemoryRouterInstance {
   const router = createMemoryRouter(
     [{ path: "/cancelar", element: <Cancelar /> }],
     { initialEntries: [urlCancelar(params)] },
@@ -101,7 +99,7 @@ describe("página /cancelar", () => {
     expect(
       screen.getByText("El turno fue cancelado correctamente."),
     ).toBeDefined();
-    expect(screen.getByText(/cancelado/)).toBeDefined();
+    expect(screen.getByText(/Estado del turno:\s*cancelado/)).toBeDefined();
     expect(screen.queryByText(/Dra\./)).toBeNull();
     expect(screen.queryByText(/Paciente Ficticio/i)).toBeNull();
     expect(screen.queryByText(/10\/11\/2026/)).toBeNull();
@@ -126,7 +124,8 @@ describe("página /cancelar", () => {
   it("test_cancelar_url_solo_token_e_id_sin_datos_paciente", () => {
     const router = renderCancel(valoresValidos());
 
-    const claves = [...router.state.location.searchParams.keys()].sort();
+    const searchParams = new URLSearchParams(router.state.location.search);
+    const claves = [...searchParams.keys()].sort();
     expect(claves).toEqual(["id", "token"]);
     const url = `${router.state.location.pathname}${router.state.location.search}`;
     for (const dato of [

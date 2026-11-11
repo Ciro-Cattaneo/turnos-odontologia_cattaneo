@@ -46,7 +46,13 @@ Justificación: los errores 400 y 409 se cubren en R2-R5; aquí se especifican e
 
 - **DADO** una reserva válida que responde `201` y una `FRONTEND_URL` configurada con barra final (por ejemplo `https://app.test/`)
 - **CUANDO** se lee el cuerpo de la respuesta
-- **ENTONCES** incluye `id`, `estado=reservado`, `inicio`, `fin`, `duracion_min`, `notificaciones_encoladas`, `token_cancelacion` UUID y `cancel_url` con el formato exacto `https://app.test/cancelar?token=<token_cancelacion>`, sin doble barra (RN-TU-06, regla dura 4)
+- **ENTONCES** incluye `id`, `estado=reservado`, `inicio`, `fin`, `duracion_min`, `notificaciones_encoladas`, `token_cancelacion` UUID y `cancel_url` con el formato exacto `https://app.test/cancelar?token=<token_cancelacion>&id=<turno_id>`, sin doble barra y con el `token` como primer parámetro (RN-TU-06, regla dura 4)
+
+#### Scenario: El id del link de cancelación coincide con el id del turno
+
+- **DADO** una reserva válida que responde `201`
+- **CUANDO** se compara el parámetro `id` de `cancel_url` con el `id` del turno devuelto en la misma respuesta
+- **ENTONCES** coinciden exactamente; el `id` es un localizador opaco (UUID) que no autentica y la credencial sigue siendo el `token_cancelacion` (RN-TU-06, regla dura 4)
 
 #### Scenario: Reserva con anticipación mayor a 24h encola tres notificaciones
 

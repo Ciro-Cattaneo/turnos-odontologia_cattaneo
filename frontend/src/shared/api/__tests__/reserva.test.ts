@@ -326,6 +326,19 @@ describe("armado de requests", () => {
     expect(body.inicio).toBe("2026-11-10T09:00:00-03:00");
   });
 
+  it("test_disponibilidad_rango_dia_respeta_fecha_elegida", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(disponible));
+
+    await getDisponibilidadDia(
+      "11111111-1111-4111-8111-111111111111",
+      "2026-12-31",
+    );
+
+    const url = new URL(String(fetchMock.mock.calls[0]?.[0]), "https://app.test");
+    expect(url.searchParams.get("desde")).toBe("2026-12-31T00:00:00-03:00");
+    expect(url.searchParams.get("hasta")).toBe("2026-12-31T23:59:59-03:00");
+  });
+
   it("test_cancelar_turno_usa_id_y_token", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(cancelacion));
 
@@ -339,6 +352,24 @@ describe("armado de requests", () => {
     expect([...url.searchParams.keys()]).toEqual(["token"]);
     expect(url.searchParams.get("token")).toBe(token);
     expect(call?.[1]?.method).toBe("DELETE");
+  });
+
+  it("test_cancelar_turno_token_plano_no_agrega_parametros", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(cancelacion));
+
+    await cancelarTurno(
+      "22222222-2222-4222-8222-222222222222",
+      "33333333-3333-4333-8333-333333333333",
+    );
+
+    const call = fetchMock.mock.calls[0];
+    const url = new URL(String(call?.[0]), "https://app.test");
+    expect(url.pathname).toBe(
+      "/api/turnos/22222222-2222-4222-8222-222222222222",
+    );
+    expect([...url.searchParams.keys()]).toEqual(["token"]);
+    expect(call?.[1]?.body).toBeUndefined();
+    expect(call?.[1]?.headers).toBeUndefined();
   });
 
   it("test_get_profesionales_itera_next_cursor_dos_paginas", async () => {
@@ -367,5 +398,24 @@ describe("armado de requests", () => {
     expect(secondUrl.searchParams.get("cursor")).toBe(
       "22222222-2222-4222-8222-222222222222",
     );
+  });
+
+  it("test_get_profesionales_pagina_unica_no_repite_request", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        items: [profesional("11111111-1111-4111-8111-111111111111")],
+        next_cursor: null,
+      }),
+    );
+
+    const items = await getProfesionales();
+
+    expect(items).toHaveLength(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const firstUrl = new URL(
+      String(fetchMock.mock.calls[0]?.[0]),
+      "https://app.test",
+    );
+    expect(firstUrl.searchParams.has("cursor")).toBe(false);
   });
 });

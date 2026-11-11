@@ -179,11 +179,13 @@ export async function getProfesionales(): Promise<Profesional[]> {
   const items: Profesional[] = [];
   let cursor: string | null = null;
   do {
-    const query = cursor === null ? "" : `?cursor=${encodeURIComponent(cursor)}`;
-    const page = await requestWithDetail<ProfesionalesResponse>(
-      `${API_BASE}/api/profesionales${query}`,
-      isProfesionalesResponse,
-    );
+    const query: string =
+      cursor === null ? "" : `?cursor=${encodeURIComponent(cursor)}`;
+    const page: ProfesionalesResponse =
+      await requestWithDetail<ProfesionalesResponse>(
+        `${API_BASE}/api/profesionales${query}`,
+        isProfesionalesResponse,
+      );
     items.push(...page.items);
     cursor = page.next_cursor;
   } while (cursor !== null);

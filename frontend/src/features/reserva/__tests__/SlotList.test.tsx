@@ -49,14 +49,20 @@ describe("SlotList", () => {
     ).toBeDefined();
   });
 
-  it("test_seleccionar_slot_habilita_formulario", () => {
-    render(<SelectorHarness />);
+  it.each([
+    ["09:00 a 09:30, 30 min", /09:00–09:30/],
+    ["10:00 a 10:45, 45 min", /10:00–10:45/],
+  ])(
+    "test_seleccionar_slot_habilita_formulario (%s)",
+    (nombreSlot, rango) => {
+      render(<SelectorHarness />);
 
-    expect(screen.queryByRole("form")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "09:00 a 09:30, 30 min" }));
+      expect(screen.queryByRole("form")).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: nombreSlot }));
 
-    const form = screen.getByRole("form");
-    expect(within(form).getByText(/horario elegido/i)).toBeDefined();
-    expect(within(form).getByText(/09:00–09:30/)).toBeDefined();
-  });
+      const form = screen.getByRole("form");
+      expect(within(form).getByText(/horario elegido/i)).toBeDefined();
+      expect(within(form).getByText(rango)).toBeDefined();
+    },
+  );
 });

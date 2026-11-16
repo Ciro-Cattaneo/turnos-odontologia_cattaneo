@@ -19,6 +19,7 @@ from app.modules.pacientes.router import router as pacientes_router
 from app.modules.profesionales.router import router as profesionales_router
 from app.modules.reportes.router import router as reportes_router
 from app.modules.turnos.router import router as turnos_router
+from app.modules.usuarios_staff.router import router as usuarios_staff_router
 
 try:
     settings = get_settings()
@@ -57,6 +58,7 @@ for router in (
     notificaciones_router,
     auth_router,
     reportes_router,
+    usuarios_staff_router,
 ):
     app.include_router(router)
 

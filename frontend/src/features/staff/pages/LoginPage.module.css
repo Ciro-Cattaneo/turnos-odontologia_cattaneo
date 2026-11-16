@@ -1,0 +1,44 @@
+/* Login staff: una columna, 360px primero (D-14). */
+
+.pagina {
+  width: 100%;
+  max-width: 100%;
+  padding: var(--space-4);
+}
+
+.titulo {
+  margin: 0 0 var(--space-4);
+  font-size: 1.5rem;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 100%;
+}
+
+.boton {
+  min-height: var(--touch-target);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: var(--color-surface);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.alerta {
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}

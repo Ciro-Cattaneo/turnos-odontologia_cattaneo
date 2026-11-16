@@ -159,9 +159,10 @@ def test_colision_concurrente_deja_un_ganador(test_engine):
     try:
         estados = sorted(r[0] for r in resultados)
         assert estados == ["ok", "rechazado"], resultados
-        assert "no_solape_prof" in resultados[1][1] or "exclusion" in (
-            resultados[1][1].lower()
-        )
+        # El orden de append depende del scheduler: localizar la entrada
+        # rechazada en vez de asumir que es `resultados[1]` (test flaky).
+        rechazado = next(r[1] for r in resultados if r[0] == "rechazado")
+        assert "no_solape_prof" in rechazado or "exclusion" in rechazado.lower()
         sesion = Session(bind=test_engine)
         try:
             n = sesion.execute(

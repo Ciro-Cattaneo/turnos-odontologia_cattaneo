@@ -1,7 +1,7 @@
 /** Alternativos del mismo día ante un 409 (R6). */
 
 import type { Slot } from "../../../shared/api/client";
-import { formatearHora } from "../format";
+import { formatearHora } from "../../../shared/format";
 import styles from "./AlternativosList.module.css";
 
 interface AlternativosListProps {

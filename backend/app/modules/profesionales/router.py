@@ -23,11 +23,23 @@ from app.modules.agenda.public import (
     staff_opcional,
 )
 from app.modules.agenda.schemas import AgendaQuery, ProfesionalesQuery
-from app.modules.auth.deps import DbSession, require_own_profesional
+from app.modules.auth.deps import DbSession, require_own_profesional, require_role
+from app.modules.profesionales import service
+from app.modules.profesionales.schemas import (
+    EliminarProfesionalQuery,
+    ProfesionalAdminOut,
+    ProfesionalCreate,
+    ProfesionalUpdate,
+)
+from app.modules.turnos.schemas import parse_body_or_400
 
 router = APIRouter(prefix="/api/profesionales", tags=["profesionales"])
 
 TZ = ZoneInfo("America/Argentina/Buenos_Aires")
+
+# Turnos terminales: se listan como `cerrado` (historial staff) y no ocupan
+# disponibilidad (el cómputo libre solo resta `ESTADOS_ACTIVOS`).
+ESTADOS_CERRADOS = ("atendido", "ausente", "cancelado")
 
 
 @router.get("", dependencies=[Depends(public_throttle)])
@@ -40,6 +52,15 @@ def listar_profesionales(request: Request, db: DbSession) -> dict:
     query = parse_query_or_400(
         ProfesionalesQuery, dict(request.query_params)
     )
+    if query.incluir_inactivos:
+        # D-2: el flag se evalúa antes de resolver sesión; sin flag la rama
+        # pública no toca la cookie (una sesión rota no rompe el catálogo).
+        staff = staff_opcional(request, db)
+        if staff is None:
+            raise HTTPException(status_code=401, detail="No autenticado")
+        if staff.rol != "admin":
+            raise HTTPException(status_code=403, detail="Sin permiso")
+        return service.listar_admin(db, query.limit, query.cursor)
     q = (
         db.query(
             Profesional.id,
@@ -68,6 +89,44 @@ def listar_profesionales(request: Request, db: DbSession) -> dict:
     ]
     next_cursor = str(filas[query.limit - 1][0]) if len(filas) > query.limit else None
     return {"items": items, "next_cursor": next_cursor}
+
+
+@router.post(
+    "",
+    status_code=201,
+    response_model=ProfesionalAdminOut,
+    dependencies=[Depends(require_role("admin"))],
+)
+def crear_profesional(body: dict, db: DbSession) -> dict:
+    """Alta admin (D-3): `extra='forbid'` → 400 por campo; 201 + recurso."""
+    data = parse_body_or_400(ProfesionalCreate, body)
+    return service.crear(db, data)
+
+
+@router.put(
+    "/{profesional_id}",
+    response_model=ProfesionalAdminOut,
+    dependencies=[Depends(require_role("admin"))],
+)
+def actualizar_profesional(
+    profesional_id: UUID, body: dict, db: DbSession
+) -> dict:
+    """Edición parcial admin (D-3); `activo=true` reactiva (D-5)."""
+    data = parse_body_or_400(ProfesionalUpdate, body)
+    return service.actualizar(db, profesional_id, data)
+
+
+@router.delete(
+    "/{profesional_id}",
+    response_model=ProfesionalAdminOut,
+    dependencies=[Depends(require_role("admin"))],
+)
+def eliminar_profesional(
+    profesional_id: UUID, request: Request, db: DbSession
+) -> dict:
+    """Baja lógica admin (D-4): `200` + `activo=false`, sin `?fisico` ni 409."""
+    parse_query_or_400(EliminarProfesionalQuery, dict(request.query_params))
+    return service.dar_de_baja(db, profesional_id)
 
 
 def _rango_dias(vista: str, fecha: date) -> list[date]:
@@ -116,7 +175,12 @@ def agenda_por_profesional(
             TZ,
         )
         franjas = [
-            {"tipo": "libre", "inicio": s.inicio.isoformat(), "fin": s.fin.isoformat()}
+            {
+                "tipo": "libre",
+                "inicio": s.inicio.isoformat(),
+                "fin": s.fin.isoformat(),
+                **({"duracion_min": s.duracion_min} if staff is not None else {}),
+            }
             for s in libres
         ]
         if staff is not None:
@@ -140,12 +204,18 @@ def agenda_por_profesional(
 def _franjas_staff(
     db: DbSession, profesional_id: UUID, dia_ini: datetime, dia_fin: datetime
 ) -> list[dict]:
-    """Ocupados (estado + paciente mínimo) y bloqueados (motivo) del día."""
+    """Ocupados, bloqueados y cerrados del día (solo lectura staff)."""
     from app.models.bloqueo import Bloqueo
 
     turnos = (
         db.query(
-            Turno.inicio, Turno.fin, Turno.estado, Paciente.id, Paciente.nombre
+            Turno.id,
+            Turno.inicio,
+            Turno.fin,
+            Turno.duracion_min,
+            Turno.estado,
+            Paciente.id,
+            Paciente.nombre,
         )
         .join(Paciente, Paciente.id == Turno.paciente_id)
         .filter(
@@ -153,6 +223,26 @@ def _franjas_staff(
             Turno.inicio >= dia_ini,
             Turno.inicio < dia_fin,
             Turno.estado.in_(list(slot_service.ESTADOS_ACTIVOS)),
+        )
+        .order_by(Turno.inicio)
+        .all()
+    )
+    cerrados = (
+        db.query(
+            Turno.id,
+            Turno.inicio,
+            Turno.fin,
+            Turno.duracion_min,
+            Turno.estado,
+            Paciente.id,
+            Paciente.nombre,
+        )
+        .join(Paciente, Paciente.id == Turno.paciente_id)
+        .filter(
+            Turno.profesional_id == profesional_id,
+            Turno.inicio >= dia_ini,
+            Turno.inicio < dia_fin,
+            Turno.estado.in_(list(ESTADOS_CERRADOS)),
         )
         .order_by(Turno.inicio)
         .all()
@@ -170,13 +260,27 @@ def _franjas_staff(
     franjas = [
         {
             "tipo": "ocupado",
-            "inicio": t[0].isoformat(),
-            "fin": t[1].isoformat(),
-            "estado": str(t[2].value if hasattr(t[2], "value") else t[2]),
-            "paciente": {"id": str(t[3]), "nombre": t[4]},
+            "turno_id": str(t[0]),
+            "inicio": t[1].isoformat(),
+            "fin": t[2].isoformat(),
+            "duracion_min": t[3],
+            "estado": str(t[4].value if hasattr(t[4], "value") else t[4]),
+            "paciente": {"id": str(t[5]), "nombre": t[6]},
         }
         for t in turnos
     ]
+    franjas.extend(
+        {
+            "tipo": "cerrado",
+            "turno_id": str(c[0]),
+            "inicio": c[1].isoformat(),
+            "fin": c[2].isoformat(),
+            "duracion_min": c[3],
+            "estado": str(c[4].value if hasattr(c[4], "value") else c[4]),
+            "paciente": {"id": str(c[5]), "nombre": c[6]},
+        }
+        for c in cerrados
+    )
     franjas.extend(
         {
             "tipo": "bloqueado",

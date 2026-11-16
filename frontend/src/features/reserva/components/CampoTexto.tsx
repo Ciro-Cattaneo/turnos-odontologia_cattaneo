@@ -8,7 +8,7 @@ interface CampoTextoProps {
   value: string;
   onChange: (value: string) => void;
   error?: string;
-  type?: "text" | "email" | "tel";
+  type?: "text" | "email" | "tel" | "password";
   autoComplete?: string;
   inputMode?: "text" | "numeric" | "tel" | "email";
 }

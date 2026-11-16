@@ -102,6 +102,36 @@ def test_agenda_publica_oculta_bloqueados(client, db_session):
     assert len(response.json()["dias"][0]["franjas"]) == 4
 
 
+def test_agenda_publica_sin_turno_id_ni_cerrado(client, db_session):
+    """# AC agenda-pública: la rama sin sesión no expone `turno_id` ni `cerrado`."""
+    from datetime import UTC
+
+    from app.models.turno import TurnoEstado
+    from tests.conftest import mk_paciente, mk_turno
+
+    prof = _escenario(db_session)
+    pac = mk_paciente(db_session)
+    mk_turno(
+        db_session,
+        prof.id,
+        pac.id,
+        inicio=datetime(2026, 10, 19, 14, 0, tzinfo=UTC),
+        fin=datetime(2026, 10, 19, 14, 30, tzinfo=UTC),
+        estado=TurnoEstado.cancelado,
+    )
+    db_session.flush()
+    response = client.get(
+        f"/api/profesionales/{prof.id}/agenda",
+        params={"vista": "dia", "fecha": "2026-10-19"},
+    )
+    assert response.status_code == 200
+    franjas = response.json()["dias"][0]["franjas"]
+    assert {f["tipo"] for f in franjas} == {"libre"}
+    assert "turno_id" not in response.text
+    assert "cerrado" not in response.text
+    assert all("duracion_min" not in f for f in franjas)
+
+
 def test_agenda_profesional_inexistente_404(client, db_session):
     """# AC 404: id inexistente o inactivo sin auth → 404 sin datos staff."""
     from uuid import uuid4

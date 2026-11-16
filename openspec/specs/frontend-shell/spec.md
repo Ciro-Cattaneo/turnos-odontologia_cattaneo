@@ -8,7 +8,7 @@ Provides a minimal but real single-page application shell (build, router, base l
 
 ### Requirement: Frontend shell builds and serves base routes
 
-The system SHALL ship a frontend app that compiles without errors and serves the routes `/`, `/reservar` and `/cancelar` through React Router, with `features/`, `shared/`, and `pages/` directories in place for future work.
+The system SHALL ship a frontend app that compiles without errors and serves the public routes `/`, `/reservar` and `/cancelar`, plus the staff routes `/staff/login`, `/staff/agenda` and `/staff/notificaciones` through React Router, with `features/`, `shared/`, and `pages/` directories in place. Staff screens SHALL live under a protected layout that resolves the session before rendering.
 
 #### Scenario: Production build succeeds and landing renders
 
@@ -31,6 +31,42 @@ The system SHALL ship a frontend app that compiles without errors and serves the
 - **DADO** que el usuario navega a `/cancelar?token=<token>&id=<id>`
 - **CUANDO** el router resuelve la ruta
 - **ENTONCES** se renderiza la página de cancelación y no el estado not-found
+
+#### Scenario: Login route resolves without the protected layout
+
+- **DADO** que el usuario navega a `/staff/login`
+- **CUANDO** el router resuelve la ruta
+- **ENTONCES** se renderiza la página de login staff sin resolver sesión ni mostrar la navegación protegida
+
+#### Scenario: Staff agenda route resolves under the protected layout
+
+- **DADO** una sesión staff válida
+- **CUANDO** el router resuelve `/staff/agenda`
+- **ENTONCES** se renderiza la agenda staff dentro del layout protegido y no el estado not-found
+
+#### Scenario: Staff notifications route resolves under the protected layout
+
+- **DADO** una sesión staff válida de recepción o admin
+- **CUANDO** el router resuelve `/staff/notificaciones`
+- **ENTONCES** se renderiza el panel de notificaciones fallidas dentro del layout protegido y no el estado not-found (US-009 CA-3, RN-NO-02)
+
+#### Scenario: EDGE — notifications route restricts the panel by role
+
+- **DADO** una sesión staff válida de odontología
+- **CUANDO** el router resuelve `/staff/notificaciones` por acceso directo
+- **ENTONCES** la ruta se resuelve dentro del layout protegido pero el panel no muestra items ni llama al endpoint y se informa falta de permiso genérica (RN-AU-01, KB-03 RBAC)
+
+#### Scenario: EDGE — staff route without session redirects to login
+
+- **DADO** un usuario sin sesión staff
+- **CUANDO** el router resuelve `/staff/agenda` o `/staff/notificaciones`
+- **ENTONCES** redirige a `/staff/login` sin renderizar contenido protegido
+
+#### Scenario: EDGE — public routes stay public
+
+- **DADO** un usuario sin sesión staff
+- **CUANDO** navega a `/`, `/reservar` o `/cancelar`
+- **ENTONCES** las páginas públicas se renderizan sin pedir login ni redirigir a staff
 
 ### Requirement: Layout is mobile-first at 360px without horizontal scroll
 

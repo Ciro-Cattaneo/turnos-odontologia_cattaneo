@@ -253,7 +253,7 @@ Rama near-critical de operación (recepción no puede trabajar sin ella):
   - `knowledge-base/10_preguntas_abiertas.md` §PB-01, §PB-02, §PB-07
 
 ### [C-10] `frontend-agenda-staff`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado y archivado (2026-11-15) - ver `openspec/changes/archive/2026-11-15-c-10-frontend-agenda-staff/`; 36/36 tareas, 229 tests frontend (Vitest, 30 archivos) + 551 tests backend, `npx tsc -b` sin errores, `npm run build` OK, ruff limpio.
 - **Scope**:
   - Login staff + agenda multi-profesional día/semana (`GET /api/profesionales/{id}/agenda`): slots ocupados/libres/bloqueados con estado y paciente; selector multi-profesional sin recargar datos ajenos; "última actualización" por profesional (US-002 CA-3)
   - UI CRUD recepción (crear con `origen=recepcion`, editar/reprogramar, cancelar + forzar <3h con motivo), corrección datos paciente + historial, marcar confirmado/atendido/ausente (solo transiciones válidas)
@@ -272,7 +272,7 @@ Rama near-critical de operación (recepción no puede trabajar sin ella):
 ## FASE 5 — Admin, reportes y deploy
 
 ### [C-11] `admin-profesionales-reportes`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado y archivado (2026-11-16) - ver `openspec/changes/archive/2026-11-16-c-11-admin-profesionales-reportes/`; 75/75 tareas, 712 tests backend, ruff limpio, sin migraciones nuevas (`head=002_agenda_meta`); sincronizados `admin-profesionales` (5 req / 30 esc), `reportes-ocupacion` (5 req / 28 esc) y `staff-auth` (+5 req / +30 esc; 14 req / 49 esc)
 - **Scope**:
   - Admin (auth): `CRUD /api/profesionales` (alta con `duracion_default_min` configurable; baja = `activo=false`, conserva historial) + `CRUD /api/usuarios-staff` (rol, link opcional `profesional_id`)
   - `GET /api/reportes/ocupacion?profesional_id=&desde=&hasta=`: tabla por profesional (turnos, atendidos, ausentes, cancelados, % ocupación) + filtro rango fechas; lectura de estados RN-TU-07

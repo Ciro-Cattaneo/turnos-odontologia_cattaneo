@@ -37,6 +37,7 @@ class ProfesionalesQuery(BaseModel):
 
     limit: int = Field(default=20, ge=1, le=100)
     cursor: UUID | None = None
+    incluir_inactivos: bool = False
 
 
 class DisponibilidadQuery(BaseModel):

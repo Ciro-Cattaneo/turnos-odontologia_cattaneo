@@ -1,7 +1,7 @@
 /** Lista de slots libres tal como los devuelve el contrato (R3, D-5). */
 
 import type { Slot } from "../../../shared/api/client";
-import { formatearDuracion, formatearHora } from "../format";
+import { formatearDuracion, formatearHora } from "../../../shared/format";
 import styles from "./SlotList.module.css";
 
 interface SlotListProps {

@@ -1,0 +1,86 @@
+/* Layout staff protegido: encabezado, navegación y contenido (D-2, D-14). */
+
+.layout {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100vh;
+}
+
+.encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.navegacion {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.enlace {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.identidad {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.email {
+  color: var(--color-muted);
+  overflow-wrap: anywhere;
+}
+
+.salir {
+  min-height: var(--touch-target);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.salir:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.contenido {
+  width: 100%;
+  max-width: 100%;
+  padding: var(--space-4);
+}
+
+.alerta {
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.botonSecundario {
+  min-height: var(--touch-target);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}

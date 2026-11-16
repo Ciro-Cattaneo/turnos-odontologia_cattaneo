@@ -4,7 +4,7 @@
 # semana 7 días keyset, fecha inválida 400).
 """
 
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -138,3 +138,135 @@ def test_fecha_invalida_400(client, db_session, staff_escenario):
         ).status_code
         == 400
     )
+
+
+@pytest.fixture
+def agenda_lunes(db_session):
+    """Lunes 09:00–12:00 local con turno activo de `duracion_min` configurable."""
+    from datetime import UTC
+
+    from app.models.disponibilidad import Disponibilidad
+    from app.models.turno import TurnoEstado
+    from tests.conftest import mk_paciente, mk_profesional, mk_turno
+    from tests.test_auth_login import mk_staff
+
+    def _crear(duracion_min: int, estado=TurnoEstado.reservado):
+        prof = mk_profesional(db_session, duracion_default_min=duracion_min)
+        db_session.add(
+            Disponibilidad(
+                profesional_id=prof.id,
+                dia_semana=0,
+                hora_desde=time(9, 0),
+                hora_hasta=time(12, 0),
+                vigente_desde=date(2026, 1, 1),
+                vigente_hasta=date(2026, 12, 31),
+            )
+        )
+        pac = mk_paciente(db_session)
+        inicio = datetime(2026, 10, 19, 12, 0, tzinfo=UTC)
+        turno = mk_turno(
+            db_session,
+            prof.id,
+            pac.id,
+            inicio=inicio,
+            fin=inicio + timedelta(minutes=duracion_min),
+            estado=estado,
+        )
+        db_session.flush()
+        mk_staff(db_session, "recepcion@ficticio.test", "password-ficticia-1")
+        return prof, turno, pac
+
+    return _crear
+
+
+def test_franja_ocupada_expone_turno_id_y_duracion(
+    client, db_session, agenda_lunes
+):
+    """# AC franjas-staff: `ocupado` con `turno_id` + `duracion_min` del turno."""
+    prof, turno, _ = agenda_lunes(45)
+    _login(client)
+    response = client.get(
+        f"/api/profesionales/{prof.id}/agenda",
+        params={"vista": "dia", "fecha": "2026-10-19"},
+    )
+    assert response.status_code == 200
+    franjas = response.json()["dias"][0]["franjas"]
+    ocupado = next(f for f in franjas if f["tipo"] == "ocupado")
+    assert ocupado["turno_id"] == str(turno.id)
+    assert ocupado["duracion_min"] == 45
+
+
+def test_franja_libre_expone_granularidad(client, db_session, agenda_lunes):
+    """# AC franjas-staff: cada `libre` incluye la granularidad del profesional."""
+    prof, _, _ = agenda_lunes(30)
+    _login(client)
+    response = client.get(
+        f"/api/profesionales/{prof.id}/agenda",
+        params={"vista": "dia", "fecha": "2026-10-19"},
+    )
+    assert response.status_code == 200
+    libres = [
+        f for f in response.json()["dias"][0]["franjas"] if f["tipo"] == "libre"
+    ]
+    assert libres
+    assert all(f["duracion_min"] == 30 for f in libres)
+
+
+def test_turno_cancelado_sigue_libre_y_aparece_cerrado(
+    client, db_session, agenda_lunes
+):
+    """# AC cerrados: un cancelado no ocupa y aparece una sola vez como cerrado."""
+    from app.models.turno import TurnoEstado
+
+    prof, turno, _ = agenda_lunes(30, estado=TurnoEstado.cancelado)
+    _login(client)
+    response = client.get(
+        f"/api/profesionales/{prof.id}/agenda",
+        params={"vista": "dia", "fecha": "2026-10-19"},
+    )
+    assert response.status_code == 200
+    franjas = response.json()["dias"][0]["franjas"]
+    libres = [f for f in franjas if f["tipo"] == "libre"]
+    assert any(
+        f["inicio"].startswith("2026-10-19T09:00") for f in libres
+    )
+    cerrados = [f for f in franjas if f["tipo"] == "cerrado"]
+    assert len(cerrados) == 1
+    cerrado = cerrados[0]
+    assert cerrado["turno_id"] == str(turno.id)
+    assert cerrado["estado"] == "cancelado"
+    assert cerrado["duracion_min"] == 30
+    assert cerrado["paciente"]["nombre"].startswith("Paciente Ficticio")
+    assert not any(f["tipo"] == "ocupado" for f in franjas)
+
+
+def test_turnos_terminales_se_listan_todos_como_cerrados(
+    client, db_session, agenda_lunes
+):
+    """# AC cerrados: atendido, ausente y cancelado aparecen una vez cada uno."""
+    from app.models.turno import TurnoEstado
+    from tests.conftest import mk_turno
+
+    prof, _, paciente = agenda_lunes(30, estado=TurnoEstado.cancelado)
+    for hora, estado in ((10, TurnoEstado.atendido), (11, TurnoEstado.ausente)):
+        inicio = datetime(2026, 10, 19, hora, 0, tzinfo=TZ)
+        mk_turno(
+            db_session,
+            prof.id,
+            paciente.id,
+            inicio=inicio,
+            fin=inicio + timedelta(minutes=30),
+            estado=estado,
+        )
+    db_session.flush()
+    _login(client)
+    response = client.get(
+        f"/api/profesionales/{prof.id}/agenda",
+        params={"vista": "dia", "fecha": "2026-10-19"},
+    )
+    assert response.status_code == 200
+    franjas = response.json()["dias"][0]["franjas"]
+    cerrados = [f for f in franjas if f["tipo"] == "cerrado"]
+    assert {f["estado"] for f in cerrados} == {"cancelado", "atendido", "ausente"}
+    assert len(cerrados) == 3
+    assert not any(f["tipo"] == "ocupado" for f in franjas)

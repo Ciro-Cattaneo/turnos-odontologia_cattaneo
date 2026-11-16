@@ -1,0 +1,84 @@
+/* Panel de notificaciones fallidas (§9 completa el contenido): 360px (D-14). */
+
+.pagina {
+  width: 100%;
+  max-width: 100%;
+}
+
+.titulo {
+  margin: 0 0 var(--space-3);
+  font-size: 1.5rem;
+}
+
+.alerta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.alerta p {
+  margin: 0;
+}
+
+.estado {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.aviso {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.principal {
+  margin: 0 0 var(--space-2);
+  overflow-wrap: anywhere;
+}
+
+.detalle {
+  margin: 0;
+  color: var(--color-muted);
+  overflow-wrap: anywhere;
+}
+
+.cargarMas,
+.reintentar {
+  min-height: var(--touch-target);
+  margin-top: var(--space-3);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-primary-dark);
+  font: inherit;
+  cursor: pointer;
+}
+
+.cargarMas:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}

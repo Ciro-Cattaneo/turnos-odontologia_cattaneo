@@ -3,7 +3,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 
 import type { ApiErrorDetail, Slot } from "../../../shared/api/client";
-import { formatearDuracion, formatearHora } from "../format";
+import { formatearDuracion, formatearHora } from "../../../shared/format";
 import {
   FORM_FIELDS,
   FORM_VALUES_VACIOS,

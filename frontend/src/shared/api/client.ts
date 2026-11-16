@@ -37,11 +37,16 @@ export interface MensajeDetail {
   contacto?: string;
 }
 
+export interface CodigoDetail {
+  codigo: string;
+}
+
 /** Unión discriminada por la forma del `detail` de cada error del backend. */
 export type ApiErrorDetail =
   | FieldError[]
   | AlternativosDetail
   | MensajeDetail
+  | CodigoDetail
   | string
   | null;
 
@@ -164,6 +169,7 @@ function parseDetail(value: unknown): ApiErrorDetail {
         }
         return { codigo, mensaje };
       }
+      return { codigo };
     }
   }
   return null;

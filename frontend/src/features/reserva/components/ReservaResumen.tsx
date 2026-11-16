@@ -1,7 +1,11 @@
 /** Resumen del 201 y link de cancelación (R5, D-6). */
 
 import type { TurnoOut } from "../../../shared/api/reserva";
-import { formatearDuracion, formatearFecha, formatearHora } from "../format";
+import {
+  formatearDuracion,
+  formatearFecha,
+  formatearHora,
+} from "../../../shared/format";
 import styles from "./ReservaResumen.module.css";
 
 interface ReservaResumenProps {

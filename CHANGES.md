@@ -302,3 +302,26 @@ Rama near-critical de operación (recepción no puede trabajar sin ella):
   - `knowledge-base/02_descripcion_general.md` §Deploy v1
   - `knowledge-base/10_preguntas_abiertas.md` §PB-05
   - `knowledge-base/09_decisiones_y_supuestos.md` §DD-05, §SU-03
+
+---
+
+## Extensión post-roadmap
+
+> Changes fuera de la secuencia original (no bloquean ni reordenan las fases 0–5).
+
+### [C-13] `frontend-admin`
+- **Estado**: `[x]` completado y archivado (2026-11-16) - ver `openspec/changes/archive/2026-11-16-c-13-frontend-admin/`; apply 57/58 (8.6 = QA manual 360px pendiente, requiere navegador real; no es fallo de implementación), 313 tests frontend (Vitest), `npx tsc -b` y `npm run build` OK; sincronizados `frontend-admin` (nueva, 10 req / 45 esc) y `frontend-shell` (1 req modificado / 15 esc; 3 req / 17 esc)
+- **Scope**:
+  - UI de administración que C-11 dejó fuera de v1 (Non-Goals de su `design.md`, gap D-15): `/staff/admin/profesionales`, `/staff/admin/usuarios` y `/staff/admin/reportes`, todas admin-only
+  - Profesionales: listado con `incluir_inactivos`, alta/edición, baja lógica y reactivación; usuarios staff: listado keyset, alta/edición (email y password no editables), baja y reactivación con `409 email_duplicado` y `422 ultimo_admin` accionables; reporte de ocupación con rango (default 30 días, tope 366), filtro por profesional, totales y `%` `null`/`>100`
+  - Nav admin solo para `rol=admin`; acceso directo por URL con otro rol → `403` genérico sin romper el layout; mobile-first 360px, a11y y sin export (PB-06)
+  - Sin cambios de backend, migraciones ni export
+- **Dependencias**: `C-09, C-10, C-11` (todos archivados)
+- **Governance**: MEDIO
+- **Leer antes**:
+  - `openspec/specs/admin-profesionales/spec.md` §AP R1–R5
+  - `openspec/specs/staff-auth/spec.md` §SA R1–R5
+  - `openspec/specs/reportes-ocupacion/spec.md` §RE R1–R5
+  - `openspec/specs/frontend-shell/spec.md`, `openspec/specs/frontend-agenda-staff/spec.md`
+  - `knowledge-base/06_funcionalidades.md` §US-010, §US-011
+  - `knowledge-base/10_preguntas_abiertas.md` §PB-06

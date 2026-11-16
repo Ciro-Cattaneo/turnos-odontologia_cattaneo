@@ -120,6 +120,19 @@ export function StaffLayout(): JSX.Element {
               Notificaciones fallidas
             </Link>
           )}
+          {sesion.rol === "admin" && (
+            <>
+              <Link className={styles.enlace} to="/staff/admin/profesionales">
+                Profesionales
+              </Link>
+              <Link className={styles.enlace} to="/staff/admin/usuarios">
+                Usuarios staff
+              </Link>
+              <Link className={styles.enlace} to="/staff/admin/reportes">
+                Reportes
+              </Link>
+            </>
+          )}
         </nav>
         <div className={styles.identidad}>
           <span className={styles.email}>{sesion.email}</span>

@@ -1,0 +1,138 @@
+/* Administración de profesionales: layout fluido, 360px primero (duro 8). */
+
+.pagina {
+  width: 100%;
+  max-width: 100%;
+}
+
+.encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.titulo {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.toggle {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-height: var(--touch-target);
+  margin-bottom: var(--space-2);
+}
+
+.aviso {
+  min-height: 1.5rem;
+  margin: 0 0 var(--space-2);
+  color: var(--color-success);
+}
+
+.alerta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.alertaTexto {
+  margin: 0;
+}
+
+.estado {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fila {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.datos {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.nombre {
+  margin: 0 0 var(--space-2);
+  font-size: 1.125rem;
+}
+
+.detalle {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.activo,
+.inactivo {
+  margin: var(--space-2) 0 0;
+  font-weight: 700;
+}
+
+.activo {
+  color: var(--color-success);
+}
+
+.inactivo {
+  color: var(--color-warning);
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.accion,
+.secundario {
+  min-height: var(--touch-target);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  cursor: pointer;
+}
+
+.accion {
+  border: none;
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 700;
+}
+
+.secundario {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.accion:disabled,
+.secundario:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}

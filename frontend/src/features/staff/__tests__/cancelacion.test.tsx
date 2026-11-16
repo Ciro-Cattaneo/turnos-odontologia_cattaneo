@@ -95,6 +95,11 @@ function urlsDe(mock: ReturnType<typeof vi.fn>, sufijo: string): string[] {
     );
 }
 
+function rutaDe(url: string): string {
+  const parsed = new URL(url, "http://test.local");
+  return `${parsed.pathname}${parsed.search}`;
+}
+
 interface Mutacion {
   url: string;
   method: string;
@@ -288,7 +293,9 @@ describe("cancelación staff", () => {
 
     const [cancelacion] = mutaciones(fetchMock, "DELETE");
     expect(cancelacion).toBeDefined();
-    expect(cancelacion?.url).toBe("/api/turnos/turno-ficticio-cancel");
+    expect(rutaDe(cancelacion?.url ?? "")).toBe(
+      "/api/turnos/turno-ficticio-cancel",
+    );
     expect(cancelacion?.body).toEqual({});
     expect(cancelacion?.contentType).toContain("application/json");
     expect(urlsDe(fetchMock, "/agenda?")).toHaveLength(2);

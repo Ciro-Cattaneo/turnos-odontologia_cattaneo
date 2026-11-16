@@ -1,0 +1,11 @@
+/* Falta de permiso admin: bloque fluido, 360px primero (duro 8). */
+
+.alerta {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}

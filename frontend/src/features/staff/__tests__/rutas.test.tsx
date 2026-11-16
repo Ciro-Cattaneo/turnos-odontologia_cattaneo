@@ -20,6 +20,11 @@ const meOdontologo = {
   rol: "odontologo",
   profesional_id: "11111111-1111-4111-8111-111111111111",
 };
+const meAdmin = {
+  email: "admin@cattaneo.test",
+  rol: "admin",
+  profesional_id: null,
+};
 const profesionalesVacios = { items: [], next_cursor: null };
 
 function json(payload: unknown, status = 200): Response {
@@ -93,6 +98,75 @@ describe("rutas staff", () => {
       await screen.findByText(/no tenés permiso para esta acción/i),
     ).toBeDefined();
   });
+
+  it.each([
+    ["/staff/admin/profesionales", /^profesionales$/i],
+    ["/staff/admin/usuarios", /^usuarios staff$/i],
+    ["/staff/admin/reportes", /^reportes$/i],
+  ])(
+    "test_ruta_admin_%s_con_admin_resuelve_en_layout",
+    async (ruta, encabezado) => {
+      const fetchMock = vi.fn();
+      vi.stubGlobal("fetch", fetchMock);
+      fetchMock
+        .mockResolvedValueOnce(json(meAdmin))
+        .mockResolvedValue(json(profesionalesVacios));
+
+      renderApp(ruta);
+
+      expect(
+        await screen.findByRole("heading", { name: encabezado }),
+      ).toBeDefined();
+      expect(screen.getByRole("link", { name: /agenda/i })).toBeDefined();
+      expect(screen.queryByText(/no tenés permiso/i)).toBeNull();
+    },
+  );
+
+  it.each([
+    ["recepcion", meRecepcion],
+    ["odontologo", meOdontologo],
+  ])(
+    "test_acceso_directo_admin_con_%s_muestra_403_sin_romper_layout",
+    async (_rol, sesion) => {
+      const fetchMock = vi.fn();
+      vi.stubGlobal("fetch", fetchMock);
+      fetchMock.mockResolvedValue(json(sesion));
+
+      renderApp("/staff/admin/profesionales");
+
+      expect(
+        await screen.findByText(/no tenés permiso para esta acción/i),
+      ).toBeDefined();
+      expect(screen.queryByText(/página no encontrada/i)).toBeNull();
+      expect(screen.getByRole("link", { name: /agenda/i })).toBeDefined();
+      const urls = fetchMock.mock.calls.map((llamada) => String(llamada[0]));
+      expect(urls.some((url) => url.includes("incluir_inactivos"))).toBe(false);
+      expect(
+        urls.some((url) => url.includes("/api/profesionales?")),
+      ).toBe(false);
+    },
+  );
+
+  it.each([
+    "/staff/admin/profesionales",
+    "/staff/admin/usuarios",
+    "/staff/admin/reportes",
+  ])(
+    "test_ruta_admin_sin_sesion_redirige_a_login",
+    async (ruta) => {
+      const fetchMock = vi.fn();
+      vi.stubGlobal("fetch", fetchMock);
+      fetchMock.mockResolvedValueOnce(
+        json({ detail: "No autenticado" }, 401),
+      );
+
+      renderApp(ruta);
+
+      expect(
+        await screen.findByRole("heading", { name: /iniciar sesión/i }),
+      ).toBeDefined();
+    },
+  );
 
   it.each(["/", "/no-existe-xyz"])(
     "test_ruta_publica_%s_no_pide_sesion",

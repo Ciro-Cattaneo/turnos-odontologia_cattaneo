@@ -86,12 +86,17 @@ function renderAgenda(): ReturnType<typeof createMemoryRouter> {
   return router;
 }
 
+function rutaDe(url: string): string {
+  const parsed = new URL(url, "http://test.local");
+  return `${parsed.pathname}${parsed.search}`;
+}
+
 function urlsDe(mock: ReturnType<typeof vi.fn>, sufijo: string): string[] {
   return mock.mock.calls
     .map((call) => call[0])
-    .filter(
-      (url): url is string => typeof url === "string" && url.includes(sufijo),
-    );
+    .filter((url): url is string => typeof url === "string")
+    .map((url) => rutaDe(url))
+    .filter((url) => url.includes(sufijo));
 }
 
 interface Posteo {
@@ -106,7 +111,7 @@ function posteos(mock: ReturnType<typeof vi.fn>): Posteo[] {
     const init: RequestInit | undefined = call[1] as RequestInit | undefined;
     if (
       typeof url === "string" &&
-      url === "/api/turnos" &&
+      rutaDe(url) === "/api/turnos" &&
       init?.method === "POST"
     ) {
       const crudo = typeof init.body === "string" ? init.body : "{}";

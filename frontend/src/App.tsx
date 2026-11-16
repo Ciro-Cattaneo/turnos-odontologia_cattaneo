@@ -1,5 +1,8 @@
 import { useRoutes, type RouteObject } from "react-router-dom";
 
+import { AdminProfesionalesPage } from "./features/staff/admin/pages/AdminProfesionalesPage";
+import { AdminReportesPage } from "./features/staff/admin/pages/AdminReportesPage";
+import { AdminUsuariosPage } from "./features/staff/admin/pages/AdminUsuariosPage";
 import { StaffLayout } from "./features/staff/components/StaffLayout";
 import { AgendaPage } from "./features/staff/pages/AgendaPage";
 import { LoginPage } from "./features/staff/pages/LoginPage";
@@ -20,6 +23,9 @@ export const appRoutes: RouteObject[] = [
     children: [
       { path: "agenda", element: <AgendaPage /> },
       { path: "notificaciones", element: <NotificacionesPage /> },
+      { path: "admin/profesionales", element: <AdminProfesionalesPage /> },
+      { path: "admin/usuarios", element: <AdminUsuariosPage /> },
+      { path: "admin/reportes", element: <AdminReportesPage /> },
     ],
   },
   { path: "*", element: <NotFound /> },

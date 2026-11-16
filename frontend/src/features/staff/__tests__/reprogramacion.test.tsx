@@ -73,6 +73,11 @@ function urlsDe(mock: ReturnType<typeof vi.fn>, sufijo: string): string[] {
     );
 }
 
+function rutaDe(url: string): string {
+  const parsed = new URL(url, "http://test.local");
+  return `${parsed.pathname}${parsed.search}`;
+}
+
 interface Mutacion {
   url: string;
   method: string;
@@ -259,7 +264,9 @@ describe("reprogramación de turnos", () => {
 
     const [reprogramacion] = mutaciones(fetchMock, "PUT");
     expect(reprogramacion).toBeDefined();
-    expect(reprogramacion?.url).toBe("/api/turnos/turno-ficticio-repro");
+    expect(rutaDe(reprogramacion?.url ?? "")).toBe(
+      "/api/turnos/turno-ficticio-repro",
+    );
     expect(reprogramacion?.body).toEqual({
       inicio: `${HOY}T14:00:00-03:00`,
       duracion_min: 30,

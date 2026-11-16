@@ -29,6 +29,8 @@ export interface StaffErrorInfo {
 }
 
 const MENSAJES_422: Record<string, string> = {
+  ultimo_admin:
+    "Debe quedar al menos un admin activo. Asigná el rol a otro usuario antes de cambiar o dar de baja este.",
   motivo_requerido:
     "Se requiere un motivo para cancelar con menos de 3 horas de anticipación.",
   turno_no_editable: "El turno ya no se puede editar en su estado actual.",
@@ -109,6 +111,15 @@ function desdeHttp(error: ApiHttpError, contexto: string): StaffErrorInfo {
   }
   if (error.status === 409) {
     const codigo = codigoDe(error.detail);
+    if (codigo === "email_duplicado") {
+      return {
+        ...vacio(
+          "conflict",
+          "Ese email ya está tomado, incluso por un usuario inactivo. Reactivá la fila existente en lugar de crear una nueva.",
+        ),
+        codigo,
+      };
+    }
     if (codigo === "dni_duplicado") {
       return {
         ...vacio(
@@ -128,6 +139,10 @@ function desdeHttp(error: ApiHttpError, contexto: string): StaffErrorInfo {
     };
   }
   if (error.status === 422) {
+    if (Array.isArray(error.detail)) {
+      const fieldErrors = camposDe(error.detail);
+      return { ...vacio("field", "Revisá los datos marcados."), fieldErrors };
+    }
     const codigo = codigoDe(error.detail);
     return {
       ...vacio(

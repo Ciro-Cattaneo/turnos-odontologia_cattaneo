@@ -9,6 +9,7 @@ import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { appRoutes } from "../../../App";
+import { API_BASE } from "../../../shared/api/client";
 
 const meRecepcion = {
   email: "recepcion@ficticio.test",
@@ -74,7 +75,7 @@ describe("login staff", () => {
     ).toBeDefined();
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
-      "/api/auth/login",
+      `${API_BASE}/api/auth/login`,
       expect.objectContaining({ method: "POST", credentials: "include" }),
     );
     const body = JSON.parse(
@@ -171,7 +172,7 @@ describe("login staff", () => {
     ).toBeDefined();
     expect(screen.queryByText("recepcion@ficticio.test")).toBeNull();
     expect(fetchMock).toHaveBeenLastCalledWith(
-      "/api/auth/logout",
+      `${API_BASE}/api/auth/logout`,
       expect.objectContaining({ method: "POST", credentials: "include" }),
     );
   });

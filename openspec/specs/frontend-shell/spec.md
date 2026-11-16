@@ -8,7 +8,7 @@ Provides a minimal but real single-page application shell (build, router, base l
 
 ### Requirement: Frontend shell builds and serves base routes
 
-The system SHALL ship a frontend app that compiles without errors and serves the public routes `/`, `/reservar` and `/cancelar`, plus the staff routes `/staff/login`, `/staff/agenda` and `/staff/notificaciones` through React Router, with `features/`, `shared/`, and `pages/` directories in place. Staff screens SHALL live under a protected layout that resolves the session before rendering.
+The frontend app SHALL compile without errors and serve `/`, `/reservar` and `/cancelar` publicly, plus staff routes `/staff/login`, `/staff/agenda`, `/staff/notificaciones` and admin routes `/staff/admin/profesionales`, `/staff/admin/usuarios`, `/staff/admin/reportes` via React Router, with `features/`, `shared/`, `pages/` in place. Staff screens SHALL live under a protected layout that resolves the session before rendering, and admin navigation SHALL be visible only to `admin`.
 
 #### Scenario: Production build succeeds and landing renders
 
@@ -56,10 +56,40 @@ The system SHALL ship a frontend app that compiles without errors and serves the
 - **CUANDO** el router resuelve `/staff/notificaciones` por acceso directo
 - **ENTONCES** la ruta se resuelve dentro del layout protegido pero el panel no muestra items ni llama al endpoint y se informa falta de permiso genérica (RN-AU-01, KB-03 RBAC)
 
+#### Scenario: FELIZ — La pantalla de profesionales resuelve bajo el layout protegido
+
+- **DADO** una sesión staff válida con `rol=admin`
+- **CUANDO** el router resuelve `/staff/admin/profesionales`
+- **ENTONCES** se renderiza la pantalla de administración de profesionales dentro del layout protegido y no el estado not-found
+
+#### Scenario: FELIZ — La pantalla de usuarios staff resuelve bajo el layout protegido
+
+- **DADO** una sesión staff válida con `rol=admin`
+- **CUANDO** el router resuelve `/staff/admin/usuarios`
+- **ENTONCES** se renderiza la pantalla de administración de usuarios staff dentro del layout protegido y no el estado not-found
+
+#### Scenario: FELIZ — La pantalla de reportes resuelve bajo el layout protegido
+
+- **DADO** una sesión staff válida con `rol=admin`
+- **CUANDO** el router resuelve `/staff/admin/reportes`
+- **ENTONCES** se renderiza la pantalla del reporte de ocupación dentro del layout protegido y no el estado not-found
+
+#### Scenario: EDGE — La navegación admin se oculta a recepción y odontología
+
+- **DADO** una sesión staff válida con `rol=recepcion` y otra con `rol=odontologo` (casos parametrizados)
+- **CUANDO** se muestra la navegación del layout protegido
+- **ENTONCES** no aparece ninguna entrada hacia `/staff/admin/profesionales`, `/staff/admin/usuarios` ni `/staff/admin/reportes`, mientras que con `rol=admin` las tres entradas sí aparecen
+
+#### Scenario: EDGE — Un acceso directo admin de otro rol muestra falta de permiso sin romper el layout
+
+- **DADO** una sesión staff válida con `rol=recepcion` u `odontologo` (casos parametrizados)
+- **CUANDO** el router resuelve por URL directa `/staff/admin/profesionales`, `/staff/admin/usuarios` o `/staff/admin/reportes`
+- **ENTONCES** la ruta se resuelve dentro del layout protegido y no como not-found, la pantalla no muestra datos ni formularios de administración y se informa falta de permiso genérica (RN-AU-01, KB-03 RBAC)
+
 #### Scenario: EDGE — staff route without session redirects to login
 
 - **DADO** un usuario sin sesión staff
-- **CUANDO** el router resuelve `/staff/agenda` o `/staff/notificaciones`
+- **CUANDO** el router resuelve `/staff/agenda`, `/staff/notificaciones` o cualquier ruta `/staff/admin/*`
 - **ENTONCES** redirige a `/staff/login` sin renderizar contenido protegido
 
 #### Scenario: EDGE — public routes stay public

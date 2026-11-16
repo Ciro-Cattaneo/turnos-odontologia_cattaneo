@@ -107,6 +107,43 @@ describe("mensajeDeError staff", () => {
     expect(info.message).toMatch(/conectar/i);
   });
 
+  it("test_mensaje_de_error_409_email_duplicado_especifico", () => {
+    const info = mensajeDeError(
+      new ApiHttpError(409, { codigo: "email_duplicado" }),
+    );
+
+    expect(info.kind).toBe("conflict");
+    expect(info.codigo).toBe("email_duplicado");
+    expect(info.message).toMatch(/email/i);
+    expect(info.message).toMatch(/reactiv/i);
+  });
+
+  it("test_mensaje_de_error_422_ultimo_admin_accionable", () => {
+    const info = mensajeDeError(
+      new ApiHttpError(422, { codigo: "ultimo_admin" }),
+    );
+
+    expect(info.kind).toBe("validation");
+    expect(info.codigo).toBe("ultimo_admin");
+    expect(info.message).toMatch(/al menos un admin activo/i);
+  });
+
+  it("test_mensaje_de_error_422_profesional_id_mapea_campo", () => {
+    const detail: FieldError[] = [
+      {
+        campo: "profesional_id",
+        error: "El profesional elegido no está activo.",
+        tipo: "value_error",
+      },
+    ];
+    const info = mensajeDeError(new ApiHttpError(422, detail));
+
+    expect(info.kind).toBe("field");
+    expect(info.fieldErrors).toEqual({
+      profesional_id: "El profesional elegido no está activo.",
+    });
+  });
+
   it("test_payload_inesperado_es_error_generico", () => {
     const info = mensajeDeError(
       new ApiError("BAD_PAYLOAD", "forma de respuesta inesperada", 200),

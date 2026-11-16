@@ -152,11 +152,18 @@ const CORRECCION_OUT = {
   notificaciones_encoladas: true,
 };
 
+function rutaDe(url: string): string {
+  const parsed = new URL(url, "http://test.local");
+  return `${parsed.pathname}${parsed.search}`;
+}
+
 function stubApi(): ReturnType<typeof vi.fn> {
   const ficha = fichaPayload();
   const fetchMock = vi.fn(
     (entrada: unknown, init?: RequestInit): Promise<Response> => {
-      const url = typeof entrada === "string" ? entrada : String(entrada);
+      const url = rutaDe(
+        typeof entrada === "string" ? entrada : String(entrada),
+      );
       const method = init?.method ?? "GET";
       if (url.endsWith("/api/auth/me")) {
         return Promise.resolve(json(meRecepcion));
@@ -301,7 +308,7 @@ describe("privacidad de datos del paciente en staff", () => {
       (call) => (call[1] as RequestInit | undefined)?.method === "POST",
     );
     expect(posteos).toHaveLength(1);
-    expect(String(posteos[0]?.[0])).toBe("/api/turnos");
+    expect(rutaDe(String(posteos[0]?.[0]))).toBe("/api/turnos");
   });
 
   it("test_reprogramar_cancelar_y_corregir_no_filtran_datos_a_la_url", async () => {

@@ -68,12 +68,17 @@ function renderAgenda(): ReturnType<typeof createMemoryRouter> {
   return router;
 }
 
+function rutaDe(url: string): string {
+  const parsed = new URL(url, "http://test.local");
+  return `${parsed.pathname}${parsed.search}`;
+}
+
 function urlsDe(mock: ReturnType<typeof vi.fn>, sufijo: string): string[] {
   return mock.mock.calls
     .map((call) => call[0])
-    .filter(
-      (url): url is string => typeof url === "string" && url.includes(sufijo),
-    );
+    .filter((url): url is string => typeof url === "string")
+    .map((url) => rutaDe(url))
+    .filter((url) => url.includes(sufijo));
 }
 
 function urlAgenda(

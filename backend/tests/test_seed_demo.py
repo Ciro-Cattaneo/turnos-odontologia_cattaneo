@@ -65,8 +65,12 @@ def test_seed_demo_rehusa_en_produccion():
     assert "prod" in (proc.stdout + proc.stderr).lower()
 
 
-def test_seed_demo_no_corre_sin_rehusar_fuera_de_prod(test_engine):
-    """Fuera de prod el CLI corre (smoke contra `turnos_test`, con limpieza)."""
+def test_seed_demo_env_staging_cli_siembra_y_limpia(test_engine):
+    """Con `ENV=staging` explícito el CLI siembra (`turnos_test`, con limpieza).
+
+    Fail-closed (D-10): cualquier otro valor —incluido ausente— sale con 2;
+    los caminos inválidos viven en `test_seed_demo_staging.py`.
+    """
     import os
 
     from tests.conftest import test_db_url

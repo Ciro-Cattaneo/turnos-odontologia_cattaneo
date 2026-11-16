@@ -6,8 +6,13 @@ para TODOS los schemas de API. `forbid` aquí rompería el boot ante
 cualquier variable ajena exportada por el host/CI.
 """
 
+from typing import Literal
+
 from pydantic import ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_PLACEHOLDER_MARKERS = ("changeme", "ejemplo", "ficticio")
+_SECRET_KEY_MIN_LEN = 32
 
 
 class Settings(BaseSettings):
@@ -15,6 +20,7 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(extra="ignore", env_file=".env")
 
+    ENV: Literal["development", "staging", "prod"] = "development"
     DATABASE_URL: str
     SECRET_KEY: str
     ADMIN_EMAIL: str
@@ -28,6 +34,7 @@ class Settings(BaseSettings):
     FRONTEND_URL: str
     CANCEL_HOURS_MIN: int = 3
     SLOT_DEFAULT_MIN: int = 30
+    STATIC_DIR: str = "static"
     CONSULTORIO_CONTACTO: str = (
         "Comunicate con el consultorio para coordinar la cancelación"
     )
@@ -49,10 +56,39 @@ class Settings(BaseSettings):
         return value
 
 
+def _es_placeholder(valor: str) -> bool:
+    """Marcadores conocidos de valor ficticio (`changeme-*`, `*-ejemplo`)."""
+    normalizado = valor.lower()
+    return any(marca in normalizado for marca in _PLACEHOLDER_MARKERS)
+
+
+def _validar_produccion(settings: Settings) -> None:
+    """SC-R2/D-4: en `prod` se rechazan placeholders y `SECRET_KEY` débil.
+
+    Solo se nombran los campos inválidos; nunca se imprime su valor.
+    """
+    if settings.ENV != "prod":
+        return
+    invalidos = []
+    if len(settings.SECRET_KEY) < _SECRET_KEY_MIN_LEN or _es_placeholder(
+        settings.SECRET_KEY
+    ):
+        invalidos.append("SECRET_KEY")
+    if _es_placeholder(settings.ADMIN_PASSWORD):
+        invalidos.append("ADMIN_PASSWORD")
+    if _es_placeholder(settings.SMTP_PASS):
+        invalidos.append("SMTP_PASS")
+    if invalidos:
+        raise RuntimeError(
+            "Unsafe production configuration (placeholder or weak secret): "
+            f"{', '.join(sorted(invalidos))}"
+        )
+
+
 def get_settings() -> Settings:
     """Construye `Settings` con fail-fast claro (faltantes o inválidas)."""
     try:
-        return Settings()
+        settings = Settings()
     except ValidationError as exc:
         errores = exc.errors()
         missing = sorted(
@@ -68,5 +104,11 @@ def get_settings() -> Settings:
             raise RuntimeError(
                 f"Missing required env var(s): {', '.join(missing)}"
             ) from exc
-        detalle = "; ".join(err.get("msg", "valor inválido") for err in errores)
+        detalle = "; ".join(
+            f"{'.'.join(str(p) for p in err['loc']) or 'config'}: "
+            f"{err.get('msg', 'valor inválido')}"
+            for err in errores
+        )
         raise RuntimeError(f"Invalid configuration: {detalle}") from exc
+    _validar_produccion(settings)
+    return settings

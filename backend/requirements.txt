@@ -14,3 +14,5 @@ argon2-cffi>=25.1
 PyJWT>=2.10
 email-validator>=2.0
 apscheduler>=3.10,<4
+# Contratos del compose/Dockerfile en tests (C-12, tarea 2.1).
+pyyaml>=6

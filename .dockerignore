@@ -1,0 +1,17 @@
+# Contexto de build de la imagen única (C-12 D-3): sin secretos ni artefactos.
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+frontend/node_modules
+frontend/dist
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+backend/tests
+backups
+docs
+openspec
+knowledge-base
+.atl

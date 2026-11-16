@@ -2,10 +2,13 @@
 
 import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.core.config import get_settings
 from app.modules.agenda.router import disponibilidad_router
@@ -46,6 +49,14 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="Turnos Odontología Cattaneo", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[settings.FRONTEND_URL],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
+)
 
 for router in (
     turnos_router,
@@ -91,6 +102,34 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.get("/")
-def root() -> dict[str, str]:
-    return {"service": "turnos-odontologia", "tz": settings.TZ}
+STATIC_DIR = Path(settings.STATIC_DIR)
+
+
+def _montar_spa(aplicacion: FastAPI) -> None:
+    """D-2: un solo contenedor sirve la SPA y la API en el mismo origen.
+
+    Registrado DESPUÉS de routers y de `/api/health`: el catch-all solo
+    aplica a rutas fuera de `/api`, que conservan el 404 JSON de la API.
+    """
+    assets = STATIC_DIR / "assets"
+    if assets.is_dir():
+        aplicacion.mount("/assets", StaticFiles(directory=assets), name="assets")
+
+    @aplicacion.get("/", include_in_schema=False)
+    def spa_index() -> FileResponse:
+        return FileResponse(STATIC_DIR / "index.html")
+
+    @aplicacion.get("/{full_path:path}", include_in_schema=False)
+    def spa_fallback(full_path: str) -> FileResponse:
+        if full_path == "api" or full_path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="Not Found")
+        return FileResponse(STATIC_DIR / "index.html")
+
+
+if STATIC_DIR.is_dir():
+    _montar_spa(app)
+else:
+
+    @app.get("/")
+    def root() -> dict[str, str]:
+        return {"service": "turnos-odontologia", "tz": settings.TZ}

@@ -1,5 +1,8 @@
-# Turnos odontología (Cattaneo) — compose v1 (D-5): web + db.
-# Worker APScheduler en-proceso (regla dura 6): SIN servicio worker/redis día 1.
+# Turnos odontología (Cattaneo) — compose final v1 (C-12 D-1/D-11).
+# Worker APScheduler EN-PROCESO (regla dura 6, PB-03): NO hay servicio worker
+# ni Redis activos en v1; el camino de migración queda documentado al final.
+# Build desde la raíz del repo (la imagen compila el frontend, D-2/D-3):
+#   docker compose build web
 services:
   db:
     image: postgres:16-alpine
@@ -11,14 +14,19 @@ services:
       TZ: ${TZ:-America/Argentina/Buenos_Aires}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - turnos-internal
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U turnos -d turnos"]
       interval: 5s
       timeout: 3s
       retries: 10
+      start_period: 10s
 
   web:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     restart: unless-stopped
     depends_on:
       db:
@@ -28,23 +36,49 @@ services:
     environment:
       TZ: ${TZ:-America/Argentina/Buenos_Aires}
     ports:
-      - "8000:8000"
+      - "${WEB_PORT:-8000}:8000"
+    networks:
+      - turnos-internal
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3).status == 200 else sys.exit(1)",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
 
-  # Futura imagen worker = misma que web con comando scheduler APScheduler (C-08).
-  # worker:
-  #   build: ./backend
-  #   command: ["python", "-m", "app.worker.scheduler"]
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #   env_file:
-  #     - .env
-
-  # Solo si el worker migra a ARQ/Celery (PB-03): descomentar junto a REDIS_URL.
-  # redis:
-  #   image: redis:7-alpine
-  #   volumes:
-  #     - redisdata:/data
+networks:
+  turnos-internal:
+    driver: bridge
 
 volumes:
   pgdata:
+
+# --- Camino de migración (NO activo en v1) --------------------------------
+# El worker de mail es el BackgroundScheduler in-proceso que arranca en el
+# lifespan de `app.main`, módulo real `app.modules.notificaciones.scheduler`.
+# Un proceso separado exigiría un entrypoint nuevo (hoy no existe) y poner
+# NOTIF_WORKER_ENABLED=false en `web` para no correr el ciclo dos veces.
+# worker:
+#   build:
+#     context: .
+#     dockerfile: backend/Dockerfile
+#   command: ["python", "-m", "app.modules.notificaciones.scheduler"]
+#   depends_on:
+#     db:
+#       condition: service_healthy
+#   env_file:
+#     - .env
+#
+# Redis solo como variable documentada (REDIS_URL) si el worker migra a
+# ARQ/Celery (PB-03): no se define el servicio `redis` en v1.
+# REDIS_URL=redis://redis:6379/0
+# redis:
+#   image: redis:7-alpine
+#   volumes:
+#     - redisdata:/data

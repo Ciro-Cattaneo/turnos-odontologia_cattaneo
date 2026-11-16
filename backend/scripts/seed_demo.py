@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Seed demo staging-only: 2 profesionales + 20 turnos ficticios (D-7).
+"""Seed demo staging-only: 2 profesionales + 20 turnos ficticios (D-7/D-10).
 
-Rehúsa en producción (`ENV=prod` → exit 2 sin tocar la DB). NUNCA datos
-reales: todo contacto vive en `@ficticio.test` (regla dura 12).
+Guarda fail-closed: SÓLO corre con `ENV=staging` explícito. Cualquier otro
+valor (incluido ausente) imprime el rechazo y sale con código 2 **sin abrir
+conexión**. NUNCA datos reales: todo contacto vive en `@ficticio.test`
+(regla dura 12).
 """
 
 import os
@@ -18,8 +20,13 @@ from app.db.seed import seed_demo
 
 
 def main() -> int:
-    if os.getenv("ENV") == "prod":
-        print("refuse: seed_demo NUNCA se ejecuta en producción", file=sys.stderr)
+    env = os.getenv("ENV")
+    if env != "staging":
+        print(
+            "refuse: seed_demo sólo se ejecuta con ENV=staging "
+            f"(ENV={env or '<ausente>'})",
+            file=sys.stderr,
+        )
         return 2
     database_url = os.environ.get("DATABASE_URL")
     if not database_url:

@@ -6,7 +6,9 @@
 
 from pathlib import Path
 
-from app.core.config import Settings
+import pytest
+
+from app.core.config import Settings, get_settings
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -79,6 +81,60 @@ def test_env_example_sin_secretos_reales():
         )
         value = line.split("=", 1)[1]
         assert len(value) < 64 or "changeme" in value or "example" in value
+
+
+def test_env_example_incluye_env_vars_worker_y_placeholders_ficticios():
+    """# AC SC-R1 FELIZ — vars operativas, defaults y placeholders ficticios."""
+    parsed = _parse_env_example()
+
+    for key in (
+        "ENV",
+        "SMTP_TIMEOUT_S",
+        "NOTIF_WORKER_ENABLED",
+        "NOTIF_WORKER_INTERVAL_MIN",
+        "NOTIF_WORKER_BATCH_SIZE",
+        "CONSULTORIO_CONTACTO",
+    ):
+        assert key in parsed, f"{key} falta en .env.example"
+
+    assert parsed["ENV"] in {"development", "staging", "prod"}
+    assert parsed["TZ"] == "America/Argentina/Buenos_Aires"
+    assert parsed["CANCEL_HOURS_MIN"] == "3"
+    assert parsed["SLOT_DEFAULT_MIN"] == "30"
+    assert "@db:5432" in parsed["DATABASE_URL"]
+
+    for key in ("SECRET_KEY", "ADMIN_PASSWORD", "SMTP_PASS"):
+        valor = parsed[key].lower()
+        assert any(
+            marca in valor for marca in ("changeme", "ejemplo", "ficticio", "example")
+        ), f"{key} no parece un placeholder ficticio"
+
+    texto = (REPO_ROOT / ".env.example").read_text()
+    assert "PROVISORIO" in texto
+    assert "MIGRABLE" in texto
+
+
+def test_env_example_secret_key_placeholder_reconocible_como_no_productivo(
+    monkeypatch, tmp_path
+):
+    """# AC SC-R1 BORDE — el placeholder de SECRET_KEY lo rechaza prod."""
+    parsed = _parse_env_example()
+    parsed.pop("_commented")
+    secret_key = parsed["SECRET_KEY"].lower()
+
+    assert "changeme" in secret_key or "-ejemplo" in secret_key
+
+    monkeypatch.chdir(tmp_path)
+    for key, value in parsed.items():
+        monkeypatch.setenv(key, value)
+    monkeypatch.setenv("ENV", "prod")
+
+    with pytest.raises(RuntimeError) as exc_info:
+        get_settings()
+
+    mensaje = str(exc_info.value)
+    assert "SECRET_KEY" in mensaje
+    assert parsed["SECRET_KEY"] not in mensaje
 
 
 def test_env_real_ignorado_por_git():

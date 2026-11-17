@@ -1,5 +1,7 @@
 # Tasks — c-12-deploy-single-host
 
+> **2026-11-17 — deuda reducida**: las tareas 7.1 a 7.5 quedaron verificadas en CI con `.github/workflows/docker-smoke.yml` (run 44177232281, verde): compose con y sin `.env.docker`, build de la imagen, UID 10001 (no-root), stack healthy con la DB sin publicar, health/SPA/404 JSON/docs, migraciones y `seed_admin.py` dentro de la imagen, y fail-fast sin variables requeridas. Siguen pendientes 7.6 (backup/restore en host), 7.7 (PaaS) y 7.8 (TLS con proxy).
+
 > Orden TDD: **primero el test en rojo**, después la implementación mínima, después refactor. Los tests de backup/restore corren contra Postgres real (`BACKUP_MODE=direct` y `DATABASE_URL` del `conftest`); los tests de contrato leen archivos versionados (`docker-compose.yml`, `Dockerfile`, `.env.example`, `docs/deploy-single-host.md`, `scripts/*.sh`), que es exactamente el artefacto observable de este change. Mocks: ninguno; el único límite es el binario `pg_dump` (se usa el real). Datos ficticios `@ficticio.test` y DNI sintéticos (regla dura 12). Sin commit ni push (regla dura 11). **Ninguna tarea está tildada en este propose.**
 >
 > Códigos de escenario: `DO-R1…DO-R6` = `specs/despliegue-operacion`; `SC-R1…SC-R3` = `specs/service-config` (R1 y R2 son MODIFIED, R3 es ADDED).

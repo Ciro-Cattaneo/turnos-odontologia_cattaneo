@@ -1,7 +1,9 @@
 # Turnos Odontología Cattaneo
 
+[![docker-smoke](https://github.com/Ciro-Cattaneo/turnos-odontologia_cattaneo/actions/workflows/docker-smoke.yml/badge.svg?branch=main)](https://github.com/Ciro-Cattaneo/turnos-odontologia_cattaneo/actions/workflows/docker-smoke.yml)
+
 Sistema de gestión de turnos para consultorio odontológico (Metodología I).
-Estado: `C-01 foundation-setup` archivado; resto del plan en `CHANGES.md`.
+Estado: 13 changes archivados (C-01…C-13); plan y deuda operativa en `CHANGES.md`.
 
 > Nota de layout: el enunciado mínimo pide `src/` + `tests/`, pero este proyecto usa
 > `backend/` (app, alembic, tests, Dockerfile, requirements) + `frontend/` (src,

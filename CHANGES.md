@@ -287,7 +287,7 @@ Rama near-critical de operación (recepción no puede trabajar sin ella):
   - `knowledge-base/10_preguntas_abiertas.md` §PB-06
 
 ### [C-12] `deploy-single-host`
-- **Estado**: `[x]` completado y archivado (2026-11-16) - ver `openspec/changes/archive/2026-11-16-c-12-deploy-single-host/`; apply 47/55 tareas (7.1–7.8 = deuda operativa post-deploy: requieren Docker/host/PaaS, verificación en producción, no son fallos de implementación), 775 tests backend + 230 tests frontend (Vitest), ruff limpio, `npx tsc -b` y `npm run build` OK, sin migraciones nuevas (`head=002_agenda_meta`); sincronizados `despliegue-operacion` (nueva, 6 req / 21 esc) y `service-config` (4 req / 13 esc)
+- **Estado**: `[x]` completado y archivado (2026-11-16) - ver `openspec/changes/archive/2026-11-16-c-12-deploy-single-host/`; apply 47/55 tareas (7.1–7.8 = deuda operativa post-deploy: requieren Docker/host/PaaS, verificación en producción, no son fallos de implementación), 775 tests backend + 230 tests frontend (Vitest), ruff limpio, `npx tsc -b` y `npm run build` OK, sin migraciones nuevas (`head=002_agenda_meta`); sincronizados `despliegue-operacion` (nueva, 6 req / 21 esc) y `service-config` (4 req / 13 esc) · 2026-11-17: 7.1–7.5 verificadas en CI (`.github/workflows/docker-smoke.yml`, run 44177232281); quedan 7.6–7.8.
 - **Scope**:
   - `Dockerfile` backend + build frontend servido (estático o mismo compose); `docker-compose.yml` final (web + worker + postgres + redis opcional comentado)
   - `TZ=America/Argentina/Buenos_Aires`, persistencia UTC / display local; CORS `FRONTEND_URL`; `CANCEL_HOURS_MIN=3`, `SLOT_DEFAULT_MIN=30`

@@ -19,6 +19,28 @@ Estado: `C-01 foundation-setup` archivado; resto del plan en `CHANGES.md`.
 
 TZ: `America/Argentina/Buenos_Aires`; en DB se persiste UTC.
 
+## Demo local (1 comando)
+
+Doble clic en `demo.cmd` (raíz del repo) o, desde PowerShell:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\iniciar-demo.ps1
+```
+
+Qué hace el script: verifica Python y las dependencias del backend (instala
+`backend/requirements.txt` solo si falta algo), crea `.env` desde `.env.example`
+si no existe, fuerza `NOTIF_WORKER_ENABLED=false` y
+`FRONTEND_URL=http://localhost:<puerto>`, aplica migraciones Alembic, carga datos
+ficticios idempotentes (admin, 3 profesionales, horarios y turnos), compila la SPA
+en `static/` si hace falta y arranca API + SPA en el mismo origen.
+
+- URL: `http://localhost:8000` (SPA y API en el mismo host/puerto).
+- Credenciales staff: salen de `.env` (`ADMIN_EMAIL` / `ADMIN_PASSWORD`); el
+  banner del script las muestra al iniciar. No las escribas en el repo.
+- Opciones: `-Port 8010`, `-NoBrowser`, `-Rebuild`.
+- Detener: `Ctrl+C` o cerrar la ventana.
+- Todos los datos son ficticios (`@ficticio.test`, DNI sintéticos; Ley 25.326).
+
 ## Instalación
 
 Backend (desde la raíz del repo, PowerShell):

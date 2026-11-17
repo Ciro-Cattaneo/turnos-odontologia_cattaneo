@@ -1,8 +1,12 @@
 .atl/*
 !.atl/skill-registry.md
 .env
+.venv/
 backend/__pycache__/
 frontend/node_modules/
 frontend/dist/
+frontend/.env.local
+# SPA compilada por la demo local (ver iniciar-demo.ps1).
+static/
 # Dumps de backup (DO-R3/regla dura 12): nunca se versionan.
 backups/

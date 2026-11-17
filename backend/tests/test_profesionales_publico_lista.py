@@ -66,9 +66,7 @@ def test_baja_excluye_pero_historial_permanece(client, db_session):
     # El historial sigue legible a nivel modelo (baja lógica, sin hard-delete).
     from app.models.turno import Turno
 
-    assert (
-        db_session.query(Turno).filter(Turno.profesional_id == prof.id).count() == 1
-    )
+    assert db_session.query(Turno).filter(Turno.profesional_id == prof.id).count() == 1
 
 
 def test_keyset_sin_offset(client, db_session):

@@ -43,9 +43,7 @@ class UsuarioStaffCreate(BaseModel):
 
     @field_validator("profesional_id")
     @classmethod
-    def _invariante(
-        cls, v: UUID | None, info: ValidationInfo
-    ) -> UUID | None:
+    def _invariante(cls, v: UUID | None, info: ValidationInfo) -> UUID | None:
         rol = info.data.get("rol")
         if rol is None:
             return v

@@ -162,9 +162,7 @@ def test_fallidas_limit_fuera_de_rango_400(client, db_session, staff, limit):
     """D-9: `limit` fuera de 1–200 → 400 por `limit`."""
     _login(client, "recepcion@ficticio.test")
 
-    response = client.get(
-        "/api/notificaciones/fallidas", params={"limit": limit}
-    )
+    response = client.get("/api/notificaciones/fallidas", params={"limit": limit})
 
     assert response.status_code == 400
     assert any(d["campo"] == "limit" for d in response.json()["detail"])
@@ -221,9 +219,7 @@ def test_fallidas_keyset_devuelve_next_cursor(client, db_session, staff):
     _fallida(db_session, inicio=datetime(2026, 10, 21, 12, 0, tzinfo=UTC))
     _login(client, "recepcion@ficticio.test")
 
-    primera = client.get(
-        "/api/notificaciones/fallidas", params={"limit": 2}
-    ).json()
+    primera = client.get("/api/notificaciones/fallidas", params={"limit": 2}).json()
     assert len(primera["items"]) == 2
     assert primera["next_cursor"] is not None
 

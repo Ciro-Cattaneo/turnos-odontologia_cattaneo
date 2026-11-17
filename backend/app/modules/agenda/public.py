@@ -68,9 +68,7 @@ def staff_opcional(request: Request, db: Session) -> UsuarioStaff | None:
         user_id = UUID(str(claims["sub"]))
     except ValueError:
         raise HTTPException(status_code=401, detail="No autenticado") from None
-    usuario = (
-        db.query(UsuarioStaff).filter(UsuarioStaff.id == user_id).one_or_none()
-    )
+    usuario = db.query(UsuarioStaff).filter(UsuarioStaff.id == user_id).one_or_none()
     if usuario is None or not usuario.activo:
         raise HTTPException(status_code=401, detail="No autenticado") from None
     return usuario

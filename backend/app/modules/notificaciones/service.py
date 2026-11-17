@@ -77,9 +77,7 @@ def decodificar_cursor(cursor: str) -> tuple[datetime, UUID]:
     """Inverso de `codificar_cursor`; cualquier anomalía → `CursorInvalido`."""
     try:
         padded = cursor + "=" * (-len(cursor) % 4)
-        crudo = base64.b64decode(
-            padded, altchars=b"-_", validate=True
-        ).decode("utf-8")
+        crudo = base64.b64decode(padded, altchars=b"-_", validate=True).decode("utf-8")
         inicio_texto, separador, id_texto = crudo.partition("|")
         if not separador or not inicio_texto or not id_texto:
             raise ValueError("formato inesperado")

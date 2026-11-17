@@ -49,9 +49,7 @@ def listar_profesionales(request: Request, db: DbSession) -> dict:
     # AC agenda-disponibilidad/Listado-público (solo activos, columnas
     explícitas, sin datos staff).
     """
-    query = parse_query_or_400(
-        ProfesionalesQuery, dict(request.query_params)
-    )
+    query = parse_query_or_400(ProfesionalesQuery, dict(request.query_params))
     if query.incluir_inactivos:
         # D-2: el flag se evalúa antes de resolver sesión; sin flag la rama
         # pública no toca la cookie (una sesión rota no rompe el catálogo).
@@ -108,9 +106,7 @@ def crear_profesional(body: dict, db: DbSession) -> dict:
     response_model=ProfesionalAdminOut,
     dependencies=[Depends(require_role("admin"))],
 )
-def actualizar_profesional(
-    profesional_id: UUID, body: dict, db: DbSession
-) -> dict:
+def actualizar_profesional(profesional_id: UUID, body: dict, db: DbSession) -> dict:
     """Edición parcial admin (D-3); `activo=true` reactiva (D-5)."""
     data = parse_body_or_400(ProfesionalUpdate, body)
     return service.actualizar(db, profesional_id, data)
@@ -121,9 +117,7 @@ def actualizar_profesional(
     response_model=ProfesionalAdminOut,
     dependencies=[Depends(require_role("admin"))],
 )
-def eliminar_profesional(
-    profesional_id: UUID, request: Request, db: DbSession
-) -> dict:
+def eliminar_profesional(profesional_id: UUID, request: Request, db: DbSession) -> dict:
     """Baja lógica admin (D-4): `200` + `activo=false`, sin `?fisico` ni 409."""
     parse_query_or_400(EliminarProfesionalQuery, dict(request.query_params))
     return service.dar_de_baja(db, profesional_id)
@@ -146,9 +140,7 @@ def agenda_por_profesional(
     """
     query = parse_query_or_400(AgendaQuery, dict(request.query_params))
     staff = staff_opcional(request, db)
-    prof = (
-        db.query(Profesional).filter(Profesional.id == profesional_id).one_or_none()
-    )
+    prof = db.query(Profesional).filter(Profesional.id == profesional_id).one_or_none()
     if prof is None:
         raise HTTPException(status_code=404, detail="No encontrado")
     if not prof.activo and staff is None:
@@ -194,9 +186,7 @@ def agenda_por_profesional(
         "dias": dias_out,
         "next_cursor": (query.fecha + timedelta(days=avance)).isoformat(),
         "ultima_actualizacion": (
-            prof.ultima_actualizacion.isoformat()
-            if prof.ultima_actualizacion
-            else None
+            prof.ultima_actualizacion.isoformat() if prof.ultima_actualizacion else None
         ),
     }
 

@@ -9,7 +9,9 @@ alembic>=1.13
 psycopg[binary]>=3.0
 httpx>=0.27
 pytest>=8.0
-ruff>=0.8
+# Pin de minor: `ruff format` cambia de criterio entre releases; con `>=0.8` el
+# `ruff format --check` documentado en README fallaba según la versión instalada.
+ruff~=0.17
 argon2-cffi>=25.1
 PyJWT>=2.10
 email-validator>=2.0

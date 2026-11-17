@@ -35,7 +35,7 @@ def client(db_session):
         yield db_session
 
     app.dependency_overrides[get_db] = _override
-    app.dependency_overrides[get_now_provider] = lambda: (lambda: NOW)
+    app.dependency_overrides[get_now_provider] = lambda: lambda: NOW
     with TestClient(app, base_url="https://testserver") as c:
         yield c
     app.dependency_overrides.clear()
@@ -59,7 +59,7 @@ def client_rate_limit(db_session, monkeypatch):
         yield db_session
 
     app.dependency_overrides[get_db] = _override
-    app.dependency_overrides[get_now_provider] = lambda: (lambda: NOW)
+    app.dependency_overrides[get_now_provider] = lambda: lambda: NOW
     app.dependency_overrides[get_client_ip] = lambda: ip["valor"]
     with TestClient(app, base_url="https://testserver") as c:
         yield c, ahora, ip
@@ -287,9 +287,7 @@ def test_cancelacion_mas_de_3h_cancela_y_libera_slot(client, db_session):
     assert _estado(db_session, turno) == TurnoEstado.cancelado
     assert db_session.query(Turno).filter(Turno.id == turno.id).count() == 1
 
-    nueva = client.post(
-        "/api/turnos", json=_reserva_body(prof.id, NOW + offset)
-    )
+    nueva = client.post("/api/turnos", json=_reserva_body(prof.id, NOW + offset))
     assert nueva.status_code == 201, nueva.text
 
 
@@ -335,9 +333,7 @@ def test_cancelacion_menos_de_3h_422_con_contacto(client, db_session):
     assert detalle["contacto"].strip()
     assert _estado(db_session, turno) == TurnoEstado.reservado
     assert (
-        db_session.query(Notificacion)
-        .filter(Notificacion.turno_id == turno.id)
-        .count()
+        db_session.query(Notificacion).filter(Notificacion.turno_id == turno.id).count()
         == 0
     )
     assert (
@@ -361,9 +357,7 @@ def test_cancelacion_ventana_expirada_422_no_403(client, db_session):
     assert _estado(db_session, turno) == TurnoEstado.reservado
 
 
-def test_cancelacion_umbral_configurable_5h_422(
-    client, db_session, monkeypatch
-):
+def test_cancelacion_umbral_configurable_5h_422(client, db_session, monkeypatch):
     """# AC R1 S6: con `CANCEL_HOURS_MIN=5`, 4 h de anticipación no alcanza."""
     monkeypatch.setenv("CANCEL_HOURS_MIN", "5")
     _, _, turno = _turno(db_session, offset=timedelta(hours=4))
@@ -474,9 +468,7 @@ def test_cancelacion_dos_concurrentes_un_solo_efecto(test_engine):
         verificacion = Session(bind=test_engine)
         try:
             final = (
-                verificacion.query(Turno)
-                .filter(Turno.id == datos["turno_id"])
-                .one()
+                verificacion.query(Turno).filter(Turno.id == datos["turno_id"]).one()
             )
             assert final.estado == TurnoEstado.cancelado
             assert (
@@ -554,8 +546,7 @@ def _limpiar_commit(test_engine, datos):
     try:
         sesion.execute(
             text(
-                "ALTER TABLE auditoria_turno "
-                "DISABLE TRIGGER auditoria_no_update_delete"
+                "ALTER TABLE auditoria_turno DISABLE TRIGGER auditoria_no_update_delete"
             )
         )
         sesion.execute(
@@ -564,8 +555,7 @@ def _limpiar_commit(test_engine, datos):
         )
         sesion.execute(
             text(
-                "ALTER TABLE auditoria_turno "
-                "ENABLE TRIGGER auditoria_no_update_delete"
+                "ALTER TABLE auditoria_turno ENABLE TRIGGER auditoria_no_update_delete"
             )
         )
         sesion.execute(
@@ -588,6 +578,7 @@ def _limpiar_commit(test_engine, datos):
     finally:
         sesion.close()
 
+
 # --- §3 Endpoint, credencial única y 403 genérico ---------------------------
 
 
@@ -605,9 +596,7 @@ def test_cancelacion_token_invalido_403(client, db_session):
     assert resp.json() == {"detail": "No autorizado"}
     assert _estado(db_session, turno) == TurnoEstado.reservado
     assert (
-        db_session.query(Notificacion)
-        .filter(Notificacion.turno_id == turno.id)
-        .count()
+        db_session.query(Notificacion).filter(Notificacion.turno_id == turno.id).count()
         == 0
     )
     assert (
@@ -623,9 +612,7 @@ def test_cancelacion_token_invalido_403(client, db_session):
     [{}, {"token": ""}, {"token": "no-es-uuid"}],
     ids=["sin-token", "token-vacio", "token-malformado"],
 )
-def test_cancelacion_token_ausente_vacio_malformado_403(
-    client, db_session, params
-):
+def test_cancelacion_token_ausente_vacio_malformado_403(client, db_session, params):
     """# AC R2 S3: token ausente/vacío/mal formado → mismo 403 genérico."""
     from app.models.turno import TurnoEstado
 
@@ -667,9 +654,7 @@ def test_cancelacion_id_malformado_403(client, db_session):
     """# AC R2 S5: `id` que no parsea como UUID → 403 genérico, no 400/422."""
     _, _, turno = _turno(db_session)
 
-    resp = client.delete(
-        "/api/turnos/no-es-uuid", params=_params(turno)
-    )
+    resp = client.delete("/api/turnos/no-es-uuid", params=_params(turno))
 
     assert resp.status_code == 403
     assert resp.json() == {"detail": "No autorizado"}
@@ -727,9 +712,7 @@ def test_cancelacion_turno_cancelado_422_sin_efectos(client, db_session):
     fila = db_session.query(Turno).filter(Turno.id == turno.id).one()
     assert fila.updated_at == updated_previo
     assert (
-        db_session.query(Notificacion)
-        .filter(Notificacion.turno_id == turno.id)
-        .count()
+        db_session.query(Notificacion).filter(Notificacion.turno_id == turno.id).count()
         == 1
     )
     assert (
@@ -767,6 +750,7 @@ def test_cancelacion_403_no_revela_datos_ni_existencia(client, db_session):
     assert existente.json() == inexistente.json() == {"detail": "No autorizado"}
     assert set(existente.json()) == {"detail"}
 
+
 # --- §4 Notificación de cancelación ----------------------------------------
 
 
@@ -782,9 +766,7 @@ def test_cancelacion_encola_mail_cancelacion_pendiente(client, db_session):
     assert resp.status_code == 200
     assert resp.json()["notificaciones_encoladas"] is True
     notifs = (
-        db_session.query(Notificacion)
-        .filter(Notificacion.turno_id == turno.id)
-        .all()
+        db_session.query(Notificacion).filter(Notificacion.turno_id == turno.id).all()
     )
     assert len(notifs) == 1
     notif = notifs[0]
@@ -812,9 +794,7 @@ def test_cancelacion_encola_mail_cancelacion_pendiente(client, db_session):
         assert prohibido not in payload
 
 
-def test_cancelacion_encolado_falla_no_bloquea_200(
-    client, db_session, monkeypatch
-):
+def test_cancelacion_encolado_falla_no_bloquea_200(client, db_session, monkeypatch):
     """# AC R5 S2 / regla dura 5: fallo del encolado no deshace la cancelación."""
     from app.models.auditoria import AuditoriaTurno
     from app.models.notificacion import Notificacion
@@ -825,9 +805,7 @@ def test_cancelacion_encolado_falla_no_bloquea_200(
         def __init__(self, *args, **kwargs):
             raise RuntimeError("fallo simulado de encolado")
 
-    monkeypatch.setattr(
-        cancellation_service, "Notificacion", _BoomNotificacion
-    )
+    monkeypatch.setattr(cancellation_service, "Notificacion", _BoomNotificacion)
     _, _, turno = _turno(db_session)
 
     resp = client.delete(_url(turno), params=_params(turno))
@@ -842,16 +820,12 @@ def test_cancelacion_encolado_falla_no_bloquea_200(
     )
     assert auditoria.detalle["notificaciones_encoladas"] is False
     assert (
-        db_session.query(Notificacion)
-        .filter(Notificacion.turno_id == turno.id)
-        .count()
+        db_session.query(Notificacion).filter(Notificacion.turno_id == turno.id).count()
         == 0
     )
 
 
-def test_cancelacion_no_envia_smtp_ni_crea_otra_cola(
-    client, db_session, monkeypatch
-):
+def test_cancelacion_no_envia_smtp_ni_crea_otra_cola(client, db_session, monkeypatch):
     """# AC R5 S3: C-06 solo encola; no invoca SMTP ni otra cola."""
     from app.models.notificacion import NotifEstado, Notificacion
     from app.modules.notificaciones import sender as sender_module
@@ -866,14 +840,13 @@ def test_cancelacion_no_envia_smtp_ni_crea_otra_cola(
 
     assert resp.status_code == 200
     notifs = (
-        db_session.query(Notificacion)
-        .filter(Notificacion.turno_id == turno.id)
-        .all()
+        db_session.query(Notificacion).filter(Notificacion.turno_id == turno.id).all()
     )
     assert len(notifs) == 1
     assert notifs[0].estado == NotifEstado.pendiente
     assert notifs[0].enviada_at is None
     assert notifs[0].error is None
+
 
 # --- §5 Auditoría append-only ----------------------------------------------
 
@@ -905,9 +878,7 @@ def test_cancelacion_escribe_auditoria_actor_paciente(client, db_session):
     for clave in ("inicio", "fin"):
         assert isinstance(detalle[clave], str)
         assert datetime.fromisoformat(detalle[clave]).utcoffset() == timedelta(0)
-    assert datetime.fromisoformat(detalle["inicio"]) == turno.inicio.astimezone(
-        UTC
-    )
+    assert datetime.fromisoformat(detalle["inicio"]) == turno.inicio.astimezone(UTC)
 
 
 @pytest.mark.parametrize(
@@ -915,9 +886,7 @@ def test_cancelacion_escribe_auditoria_actor_paciente(client, db_session):
     ["token-invalido", "fuera-de-plazo", "no-cancelable"],
     ids=["403-token", "422-plazo", "422-estado"],
 )
-def test_cancelacion_400_422_no_escriben_auditoria(
-    client, db_session, caso
-):
+def test_cancelacion_400_422_no_escriben_auditoria(client, db_session, caso):
     """# AC R6 S2: una solicitud rechazada no agrega filas de auditoría."""
     from app.models.auditoria import AuditoriaTurno
 
@@ -942,9 +911,7 @@ def test_cancelacion_400_422_no_escriben_auditoria(
     )
 
 
-def test_cancelacion_auditoria_no_guarda_token(
-    client, db_session, caplog
-):
+def test_cancelacion_auditoria_no_guarda_token(client, db_session, caplog):
     """# AC R6 S3: el token no aparece en `detalle` ni en logs."""
     from app.models.auditoria import AuditoriaTurno
 
@@ -968,6 +935,7 @@ def test_cancelacion_auditoria_no_guarda_token(
     )
     assert token not in logs_app
 
+
 # --- §6 Rate limit del endpoint público ------------------------------------
 
 
@@ -981,9 +949,7 @@ def _consumir_cupo_cancelacion(ip: str, veces: int) -> None:
         assert pasa, "el cupo se agotó antes de lo esperado"
 
 
-def test_cancelacion_rate_limit_dentro_limite_200(
-    client_rate_limit, db_session
-):
+def test_cancelacion_rate_limit_dentro_limite_200(client_rate_limit, db_session):
     """# AC R8 S1: dentro del límite responde 200 y consume cupo."""
     from app.core import ratelimit
 
@@ -1000,9 +966,7 @@ def test_cancelacion_rate_limit_dentro_limite_200(
     assert pasa is False
 
 
-def test_cancelacion_rate_limit_exceso_429_sin_cancelar(
-    client_rate_limit, db_session
-):
+def test_cancelacion_rate_limit_exceso_429_sin_cancelar(client_rate_limit, db_session):
     """# AC R8 S2: IP agotada → 429 con `Retry-After`, turno sin cambios."""
     from app.models.notificacion import Notificacion
 
@@ -1016,16 +980,12 @@ def test_cancelacion_rate_limit_exceso_429_sin_cancelar(
     assert int(resp.headers["Retry-After"]) >= 1
     assert _estado(db_session, turno).value == "reservado"
     assert (
-        db_session.query(Notificacion)
-        .filter(Notificacion.turno_id == turno.id)
-        .count()
+        db_session.query(Notificacion).filter(Notificacion.turno_id == turno.id).count()
         == 0
     )
 
 
-def test_cancelacion_rate_limit_decimo_pasa_undecimo_429(
-    client_rate_limit, db_session
-):
+def test_cancelacion_rate_limit_decimo_pasa_undecimo_429(client_rate_limit, db_session):
     """# AC R8 S3: el intento 10 se evalúa; el 11 → 429 antes de la credencial."""
     cliente, _, ip = client_rate_limit
     _, _, turno = _turno(db_session)

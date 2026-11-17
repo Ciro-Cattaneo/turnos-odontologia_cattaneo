@@ -179,9 +179,7 @@ def agenda_lunes(db_session):
     return _crear
 
 
-def test_franja_ocupada_expone_turno_id_y_duracion(
-    client, db_session, agenda_lunes
-):
+def test_franja_ocupada_expone_turno_id_y_duracion(client, db_session, agenda_lunes):
     """# AC franjas-staff: `ocupado` con `turno_id` + `duracion_min` del turno."""
     prof, turno, _ = agenda_lunes(45)
     _login(client)
@@ -205,9 +203,7 @@ def test_franja_libre_expone_granularidad(client, db_session, agenda_lunes):
         params={"vista": "dia", "fecha": "2026-10-19"},
     )
     assert response.status_code == 200
-    libres = [
-        f for f in response.json()["dias"][0]["franjas"] if f["tipo"] == "libre"
-    ]
+    libres = [f for f in response.json()["dias"][0]["franjas"] if f["tipo"] == "libre"]
     assert libres
     assert all(f["duracion_min"] == 30 for f in libres)
 
@@ -227,9 +223,7 @@ def test_turno_cancelado_sigue_libre_y_aparece_cerrado(
     assert response.status_code == 200
     franjas = response.json()["dias"][0]["franjas"]
     libres = [f for f in franjas if f["tipo"] == "libre"]
-    assert any(
-        f["inicio"].startswith("2026-10-19T09:00") for f in libres
-    )
+    assert any(f["inicio"].startswith("2026-10-19T09:00") for f in libres)
     cerrados = [f for f in franjas if f["tipo"] == "cerrado"]
     assert len(cerrados) == 1
     cerrado = cerrados[0]

@@ -24,7 +24,8 @@ import hashlib
 import os
 import sys
 import uuid
-from datetime import UTC, date, datetime, time as dt_time, timedelta
+from datetime import UTC, date, datetime, timedelta
+from datetime import time as dt_time
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -243,14 +244,17 @@ def _resumen(
     settings,
 ) -> None:
     print("=== Demo bootstrap (datos ficticios) ===")
-    print(f"admin: {'existente' if admin_existia else 'creado'} ({settings.ADMIN_EMAIL})")
+    estado_admin = "existente" if admin_existia else "creado"
+    print(f"admin: {estado_admin} ({settings.ADMIN_EMAIL})")
     print(f"profesionales: creados={profesionales[0]} existentes={profesionales[1]}")
     print(f"disponibilidades: creadas={ventanas[0]} existentes={ventanas[1]}")
     print(f"turnos futuros: creados={futuros[0]} existentes={futuros[1]}")
     print(f"turnos pasados: creados={pasados[0]} existentes={pasados[1]}")
     print(f"pacientes: creados={pacientes_creados}")
     print("")
-    print(f"login staff: email={settings.ADMIN_EMAIL} password={settings.ADMIN_PASSWORD}")
+    print(
+        f"login staff: email={settings.ADMIN_EMAIL} password={settings.ADMIN_PASSWORD}"
+    )
     print("datos ficticios (Ley 25.326): no usar en produccion")
 
 
@@ -355,9 +359,9 @@ def main() -> int:
             for idx, dia in enumerate(_dias_pasados(hoy)):
                 profesional = profesionales[idx % len(profesionales)]
                 duracion = profesional.duracion_default_min
-                inicio = datetime.combine(
-                    dia, dt_time(9, 0), tzinfo=TZ
-                ) + timedelta(minutes=2 * duracion)
+                inicio = datetime.combine(dia, dt_time(9, 0), tzinfo=TZ) + timedelta(
+                    minutes=2 * duracion
+                )
                 clave = f"pasado:{profesional.matricula}:{dia.isoformat()}"
                 creado = _crear_turno(
                     session,

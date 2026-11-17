@@ -258,9 +258,7 @@ def _procesar_fila(db: Session, fila, sender: MailSender, now: datetime) -> str:
 
     asunto, cuerpo = render(payload.tipo, payload)
     try:
-        sender.send(
-            asunto=asunto, cuerpo=cuerpo, destinatario=payload.paciente_email
-        )
+        sender.send(asunto=asunto, cuerpo=cuerpo, destinatario=payload.paciente_email)
     except Exception as exc:
         return _registrar_fallo(db, fila, now, motivo_smtp(str(exc)))
 
@@ -278,9 +276,7 @@ def _procesar_fila(db: Session, fila, sender: MailSender, now: datetime) -> str:
 def _saneamiento(db: Session, now: datetime, batch_size: int, resumen: Resumen) -> None:
     """D-2/D-13: `enviar_en` ausente/inválido → `fallida`/`payload_incompleto`."""
     motivo = motivo_payload_incompleto("enviar_en ausente o inválido")
-    filas = db.execute(
-        _SQL_SANEAMIENTO, {"batch": batch_size, "motivo": motivo}
-    ).all()
+    filas = db.execute(_SQL_SANEAMIENTO, {"batch": batch_size, "motivo": motivo}).all()
     if not filas:
         return
     db.commit()
@@ -308,8 +304,7 @@ def run_once(
     """
     if not _LOCK.acquire(blocking=False):
         logger.warning(
-            "notificacion_ciclo_solapado resultado=omitido "
-            "motivo=ciclo_en_curso"
+            "notificacion_ciclo_solapado resultado=omitido motivo=ciclo_en_curso"
         )
         return Resumen()
     try:

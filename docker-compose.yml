@@ -3,13 +3,31 @@
 # ni Redis activos en v1; el camino de migración queda documentado al final.
 # Build desde la raíz del repo (la imagen compila el frontend, D-2/D-3):
 #   docker compose build web
+#
+# Variables: ambos servicios leen `.env` y, si existe, `.env.docker` (gana
+# este último). `.env` es la config de la demo local (DB en localhost);
+# `.env.docker` sobreescribe DATABASE_URL/POSTGRES_PASSWORD para la red del
+# compose. Requiere Compose >= 2.24 (`env_file` con `required`).
+#
+# Orden de deploy (docs/deploy-single-host.md §4):
+#   docker compose up -d db
+#   docker compose run --rm web alembic upgrade head
+#   docker compose up -d
 services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
+    # POSTGRES_PASSWORD llega por env_file: `.env.docker` gana sobre `.env`, así
+    # que la password de `DATABASE_URL` y la del initdb son la misma y no se
+    # duplican en el compose. `required: false` (Compose >= 2.24) permite el
+    # flujo mínimo con sólo `.env` (ver docs/deploy-single-host.md §5).
+    env_file:
+      - path: .env
+        required: true
+      - path: .env.docker
+        required: false
     environment:
       POSTGRES_USER: turnos
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme-solo-local}
       POSTGRES_DB: turnos
       TZ: ${TZ:-America/Argentina/Buenos_Aires}
     volumes:
@@ -32,7 +50,12 @@ services:
       db:
         condition: service_healthy
     env_file:
-      - .env
+      - path: .env
+        required: true
+      # Overrides de docker (DATABASE_URL con host `db`, POSTGRES_PASSWORD,
+      # FRONTEND_URL, worker). Gitignored; ver .env.docker y README §Docker.
+      - path: .env.docker
+        required: false
     environment:
       TZ: ${TZ:-America/Argentina/Buenos_Aires}
     ports:

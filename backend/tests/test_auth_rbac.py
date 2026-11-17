@@ -46,7 +46,8 @@ def _montar_rutas():
         return {"ok": True}
 
 
-_montar_rutas()
+# Las rutas de contrato se montan en el fixture `client` (ver abajo): otros
+# tests recargan `app.main` con importlib.reload y el app es otro objeto.
 
 
 @pytest.fixture
@@ -55,6 +56,11 @@ def client(db_session, monkeypatch):
     from app.core import ratelimit
     from app.db.session import get_db
     from app.main import app
+
+    # Se montan acá y no al importar el módulo: otros tests recargan `app.main`
+    # con importlib.reload, así que el app de este import puede ser otro objeto
+    # y las rutas quedarían registradas en el anterior (todo 404).
+    _montar_rutas()
 
     monkeypatch.setattr(ratelimit, "LOGIN_LIMIT", 1000)
     ratelimit.reset()

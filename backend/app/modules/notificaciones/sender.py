@@ -71,9 +71,7 @@ class SMTPSender:
                     smtp.login(self.user, self.password)
                     smtp.send_message(msg)
             else:
-                with smtplib.SMTP(
-                    self.host, self.port, timeout=self.timeout_s
-                ) as smtp:
+                with smtplib.SMTP(self.host, self.port, timeout=self.timeout_s) as smtp:
                     smtp.starttls(context=ssl.create_default_context())
                     smtp.login(self.user, self.password)
                     smtp.send_message(msg)

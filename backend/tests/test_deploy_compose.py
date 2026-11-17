@@ -124,4 +124,21 @@ def test_compose_no_contiene_secretos_literales(compose, compose_texto):
                 f"credencial literal en compose: {match.group(1)}"
             )
 
-    assert compose["services"]["web"]["env_file"] == [".env"]
+    # Credenciales solo por env: `.env` y, si existe, `.env.docker` (overrides
+    # de docker, gitignored). Nunca valores literales en el compose.
+    env_files = compose["services"]["web"]["env_file"]
+    assert env_files[0] == {"path": ".env", "required": True}
+    assert all(entrada["path"] in {".env", ".env.docker"} for entrada in env_files)
+    assert all(isinstance(entrada.get("required"), bool) for entrada in env_files)
+
+
+def test_compose_db_toma_password_de_env_file(compose):
+    """# AC SC-R1 / DO-R2 BORDE — la password de `db` no está literal ni con
+    fallback por defecto en el compose: llega por `env_file` (`.env` +
+    `.env.docker`), la misma que usa `DATABASE_URL`.
+    """
+    db = compose["services"]["db"]
+
+    assert "POSTGRES_PASSWORD" not in (db.get("environment") or {})
+    rutas = {entrada["path"] for entrada in db["env_file"]}
+    assert rutas == {".env", ".env.docker"}

@@ -24,9 +24,7 @@ def listar_fallidas(request: Request, db: DbSession) -> dict:
     """Lista fallos SMTP/payload ordenados por inicio de turno descendente."""
     query = parse_query_or_400(FallidasQuery, dict(request.query_params))
     try:
-        return service.listar_fallidas(
-            db, limit=query.limit, cursor=query.cursor
-        )
+        return service.listar_fallidas(db, limit=query.limit, cursor=query.cursor)
     except service.CursorInvalido as exc:
         raise HTTPException(
             status_code=400,

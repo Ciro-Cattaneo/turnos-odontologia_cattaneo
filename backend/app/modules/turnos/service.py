@@ -276,9 +276,7 @@ def _insertar_turno(
                 continue
             if constraint == "no_solape_prof":
                 raise SlotOcupado from None
-            raise HTTPException(
-                status_code=500, detail="Error interno"
-            ) from None
+            raise HTTPException(status_code=500, detail="Error interno") from None
     raise HTTPException(status_code=500, detail="Error interno")
 
 
@@ -408,9 +406,7 @@ def reservar(
             if _inicio_ocupado(db, prof.id, inicio)
             else "slot_no_disponible"
         )
-        alternativos = _alternativos(
-            db, prof.id, inicio, duracion, granularidad
-        )
+        alternativos = _alternativos(db, prof.id, inicio, duracion, granularidad)
         raise HTTPException(
             status_code=409,
             detail={"codigo": codigo, "alternativos": alternativos},
@@ -428,9 +424,7 @@ def reservar(
             origen=origen,
         )
     except SlotOcupado:
-        alternativos = _alternativos(
-            db, prof.id, inicio, duracion, granularidad
-        )
+        alternativos = _alternativos(db, prof.id, inicio, duracion, granularidad)
         db.rollback()
         raise HTTPException(
             status_code=409,
@@ -572,9 +566,7 @@ def _cargar_profesional_lock(db: Session, profesional_id) -> Profesional | None:
     )
 
 
-def _descartar_pendientes(
-    db: Session, *, turno_id: uuid.UUID, detalle: str
-) -> bool:
+def _descartar_pendientes(db: Session, *, turno_id: uuid.UUID, detalle: str) -> bool:
     """Marca `fallida` las pendientes viejas con prefijo propio (D-10 paso 1)."""
     try:
         with db.begin_nested():
@@ -710,9 +702,7 @@ def reprogramar(
 
     paciente = db.query(Paciente).filter(Paciente.id == turno.paciente_id).one()
     detalle_descarte = f"inicio {_iso_utc(inicio_previo)} -> {_iso_utc(nuevo_inicio)}"
-    descartadas = _descartar_pendientes(
-        db, turno_id=turno.id, detalle=detalle_descarte
-    )
+    descartadas = _descartar_pendientes(db, turno_id=turno.id, detalle=detalle_descarte)
     encoladas = False
     if descartadas:
         encoladas = _encolar_notificaciones(
@@ -908,9 +898,7 @@ def actualizar_paciente(
             .first()
         )
         if duplicado is not None:
-            raise HTTPException(
-                status_code=409, detail={"codigo": "dni_duplicado"}
-            )
+            raise HTTPException(status_code=409, detail={"codigo": "dni_duplicado"})
 
     for campo, detalle_cambio in cambios.items():
         setattr(paciente, campo, detalle_cambio["despues"])
@@ -1016,9 +1004,7 @@ def decodificar_cursor_historial(cursor: str) -> tuple[datetime, uuid.UUID]:
     """Inverso del cursor de historial; anomalía → `HistorialCursorInvalido`."""
     try:
         padded = cursor + "=" * (-len(cursor) % 4)
-        crudo = base64.b64decode(
-            padded, altchars=b"-_", validate=True
-        ).decode("utf-8")
+        crudo = base64.b64decode(padded, altchars=b"-_", validate=True).decode("utf-8")
         created_texto, separador, id_texto = crudo.partition("|")
         if not separador or not created_texto or not id_texto:
             raise ValueError("formato inesperado")

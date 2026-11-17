@@ -71,20 +71,14 @@ def _email_duplicado() -> HTTPException:
 def _existe_email(db: Session, email: str) -> bool:
     """Pre-check amable; `CITEXT` compara sin distinguir mayúsculas."""
     return (
-        db.query(UsuarioStaff.id)
-        .filter(UsuarioStaff.email == email)
-        .first()
+        db.query(UsuarioStaff.id).filter(UsuarioStaff.email == email).first()
         is not None
     )
 
 
 def _cargar(db: Session, usuario_id: UUID) -> UsuarioStaff:
     """Lectura sin lock (solo para 404 y rol actual, D-7)."""
-    usuario = (
-        db.query(UsuarioStaff)
-        .filter(UsuarioStaff.id == usuario_id)
-        .one_or_none()
-    )
+    usuario = db.query(UsuarioStaff).filter(UsuarioStaff.id == usuario_id).one_or_none()
     if usuario is None:
         raise HTTPException(status_code=404, detail=NO_ENCONTRADO)
     return usuario
@@ -155,9 +149,7 @@ def _validar_profesional_activo(db: Session, profesional_id: UUID) -> None:
         .one_or_none()
     )
     if profesional is None or not profesional[0]:
-        raise _campo_400(
-            "profesional_id", "el profesional no existe o está inactivo"
-        )
+        raise _campo_400("profesional_id", "el profesional no existe o está inactivo")
 
 
 def crear(db: Session, data: UsuarioStaffCreate) -> dict:
@@ -182,9 +174,7 @@ def crear(db: Session, data: UsuarioStaffCreate) -> dict:
     return _out(usuario)
 
 
-def actualizar(
-    db: Session, usuario_id: UUID, data: UsuarioStaffUpdate
-) -> dict:
+def actualizar(db: Session, usuario_id: UUID, data: UsuarioStaffUpdate) -> dict:
     """Edición admin sobre el estado resultante (D-6/D-7)."""
     _cargar(db, usuario_id)
     enviados = data.model_fields_set
@@ -217,9 +207,7 @@ def actualizar(
 
     rol_resultante = nuevo_rol if nuevo_rol is not None else usuario.rol
     prof_resultante = (
-        data.profesional_id
-        if "profesional_id" in enviados
-        else usuario.profesional_id
+        data.profesional_id if "profesional_id" in enviados else usuario.profesional_id
     )
     try:
         validar_vinculo_rol(rol_resultante, prof_resultante)
@@ -237,9 +225,7 @@ def actualizar(
 def dar_de_baja(db: Session, usuario_id: UUID) -> dict:
     """Baja lógica idempotente (`activo=false`) con guarda de último admin."""
     _cargar(db, usuario_id)
-    _asegurar_admin_restante(
-        db, usuario_id, nuevo_rol=None, nuevo_activo=False
-    )
+    _asegurar_admin_restante(db, usuario_id, nuevo_rol=None, nuevo_activo=False)
     usuario = _bloquear(db, usuario_id)
     usuario.activo = False
     db.flush()

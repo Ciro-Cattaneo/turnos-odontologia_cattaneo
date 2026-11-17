@@ -37,6 +37,14 @@ os.environ.setdefault("FRONTEND_URL", "https://turnos.ficticio.test")
 # El scheduler del worker nunca arranca en la suite (D-7): los tests de
 # notificaciones llaman a `run_once` directo, sin hilos reales.
 os.environ["NOTIF_WORKER_ENABLED"] = "false"
+# La suite nunca depende de un build real de la SPA: si `static/` existe (por
+# ejemplo, tras correr la demo local, que lo genera y está gitignored), `app.main`
+# monta el catch-all de la SPA y toda ruta registrada después —las de los tests
+# de contrato— queda en 404. Se apunta a un directorio inexistente y los casos
+# que necesitan SPA usan su propio `STATIC_DIR` (test_deploy_spa.py).
+os.environ["STATIC_DIR"] = str(
+    Path(__file__).resolve().parent / "_static_inexistente_en_tests"
+)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 TEST_DB_NAME = "turnos_test"

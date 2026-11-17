@@ -45,9 +45,7 @@ def disponibilidad_publica(request: Request, db: DbSession) -> dict:
     hasta_tz = query.hasta.astimezone(TZ)
     ventanas = slot_service.fetch_ventanas(db, prof.id)
     bloqueos = slot_service.fetch_bloqueos(db, prof.id, query.desde, query.hasta)
-    ocupados = slot_service.fetch_turnos_activos(
-        db, prof.id, query.desde, query.hasta
-    )
+    ocupados = slot_service.fetch_turnos_activos(db, prof.id, query.desde, query.hasta)
     dur = prof.duracion_default_min or 30
     slots = slot_service.compute_slots(
         ventanas, bloqueos, ocupados, dur, desde_tz.date(), hasta_tz.date(), TZ
@@ -55,9 +53,7 @@ def disponibilidad_publica(request: Request, db: DbSession) -> dict:
     # Recorta al rango horario pedido (el cómputo es por día completo).
     fin_tope = query.hasta.astimezone(TZ)
     ini_tope = query.desde.astimezone(TZ)
-    en_rango = [
-        s for s in slots if s.inicio >= ini_tope and s.fin <= fin_tope
-    ]
+    en_rango = [s for s in slots if s.inicio >= ini_tope and s.fin <= fin_tope]
     return {
         "profesional_id": str(prof.id),
         "slots": [
@@ -69,8 +65,6 @@ def disponibilidad_publica(request: Request, db: DbSession) -> dict:
             for s in en_rango
         ],
         "ultima_actualizacion": (
-            prof.ultima_actualizacion.isoformat()
-            if prof.ultima_actualizacion
-            else None
+            prof.ultima_actualizacion.isoformat() if prof.ultima_actualizacion else None
         ),
     }

@@ -84,9 +84,9 @@ def test_crear_bloqueo_oculta_slots_201(client, db_session, recep):
     # `now()` es estable dentro de la transacción del test: se fija un valor
     # viejo para observar el avance del trigger de forma determinista.
     viejo = datetime(2026, 1, 1, tzinfo=UTC)
-    db_session.query(Profesional).filter(
-        Profesional.id == recep["prof"].id
-    ).update({"ultima_actualizacion": viejo})
+    db_session.query(Profesional).filter(Profesional.id == recep["prof"].id).update(
+        {"ultima_actualizacion": viejo}
+    )
     db_session.flush()
     response = client.post("/api/bloqueos", json=_body(recep["prof"].id))
     assert response.status_code == 201
@@ -110,9 +110,7 @@ def test_crear_bloqueo_oculta_slots_201(client, db_session, recep):
 def test_bloqueo_sin_motivo_400(client, db_session, recep):
     """# AC 400-motivo: vacío/blancos o ausente → 400 y no persiste."""
     _login(client)
-    sin_motivo = client.post(
-        "/api/bloqueos", json=_body(recep["prof"].id, motivo="")
-    )
+    sin_motivo = client.post("/api/bloqueos", json=_body(recep["prof"].id, motivo=""))
     assert sin_motivo.status_code == 400
     assert (
         client.post(

@@ -115,6 +115,17 @@ if (-not (Test-Path -LiteralPath $envPath)) {
 }
 
 $lineas = @(Get-Content -LiteralPath $envPath -Encoding UTF8)
+
+# `.env.example` usa el host `db`, que solo existe en la red de docker compose.
+# La demo local habla con el Postgres del host, asi que se reescribe el host y
+# se conservan usuario, password y base de la URL original.
+$dbUrl = Get-EnvKey -Lineas $lineas -Clave "DATABASE_URL"
+if ($dbUrl -match "@db(?=[:/])") {
+    $dbUrlLocal = $dbUrl -replace "@db(?=[:/])", "@127.0.0.1"
+    $lineas = @(Set-EnvKey -Lineas $lineas -Clave "DATABASE_URL" -Valor $dbUrlLocal)
+    Write-Ok "DATABASE_URL: host 'db' (docker compose) -> '127.0.0.1' (Postgres local)"
+}
+
 $lineas = @(Set-EnvKey -Lineas $lineas -Clave "ENV" -Valor "development" -SoloSiFalta)
 $lineas = @(Set-EnvKey -Lineas $lineas -Clave "NOTIF_WORKER_ENABLED" -Valor "false")
 $lineas = @(Set-EnvKey -Lineas $lineas -Clave "FRONTEND_URL" -Valor "http://localhost:$Port")

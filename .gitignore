@@ -1,8 +1,15 @@
 .atl/*
 !.atl/skill-registry.md
 .env
+# Overrides de docker compose (password de la DB del compose): nunca se versiona.
+.env.docker
 .venv/
-backend/__pycache__/
+# Bytecode de Python en cualquier subdirectorio (antes solo backend/__pycache__/).
+**/__pycache__/
+*.py[cod]
+# Cachés de herramientas (se regeneran; no son entregables).
+.pytest_cache/
+.ruff_cache/
 frontend/node_modules/
 frontend/dist/
 frontend/.env.local

@@ -40,7 +40,7 @@ def client(db_session):
         yield db_session
 
     app.dependency_overrides[get_db] = _override
-    app.dependency_overrides[get_now_provider] = lambda: (lambda: NOW)
+    app.dependency_overrides[get_now_provider] = lambda: lambda: NOW
     with TestClient(app, base_url="https://testserver") as c:
         yield c
     app.dependency_overrides.clear()
@@ -88,9 +88,7 @@ def _delete(client, url, **kwargs):
 def _prof(db_session, duracion=30, activo=True):
     from tests.conftest import mk_profesional
 
-    return mk_profesional(
-        db_session, duracion_default_min=duracion, activo=activo
-    )
+    return mk_profesional(db_session, duracion_default_min=duracion, activo=activo)
 
 
 def _ventana(db_session, prof_id, desde=9, hasta=17, dia=0):
@@ -152,9 +150,7 @@ def _paciente(db_session, dni=None, **kw):
 def _escenario(db_session, *, estado="reservado", hora=12, duracion=30, dia=19):
     prof = _prof(db_session, duracion=30)
     _ventana(db_session, prof.id)
-    pac = _paciente(
-        db_session, dni=f"{uuid.uuid4().int % (9 * 10**7) + 10**7:08d}"
-    )
+    pac = _paciente(db_session, dni=f"{uuid.uuid4().int % (9 * 10**7) + 10**7:08d}")
     turno = _turno(
         db_session,
         prof,
@@ -222,9 +218,7 @@ def _estado(db_session, turno):
 # --- §1 Contratos y despacho por sesión ------------------------------------
 
 
-def test_alta_staff_body_incompleto_400_por_campo(
-    client, db_session, staff
-):
+def test_alta_staff_body_incompleto_400_por_campo(client, db_session, staff):
     """# AC R1 S6: paciente vacío → 400 por cada campo y sin turno."""
     from app.models.turno import Turno
 
@@ -246,9 +240,7 @@ def test_alta_staff_body_incompleto_400_por_campo(
 
 
 @pytest.mark.parametrize("origen", ["ausente", "online"], ids=["ausente", "online"])
-def test_alta_staff_origen_ausente_o_invalido_400(
-    client, db_session, staff, origen
-):
+def test_alta_staff_origen_ausente_o_invalido_400(client, db_session, staff, origen):
     """# AC R1 S10: `origen` obligatorio y exactamente `recepcion`."""
     from app.models.turno import Turno
 
@@ -288,9 +280,7 @@ def test_alta_staff_respuesta_sin_token(client, db_session, staff):
     assert "cancel_url" not in cuerpo
 
 
-def test_alta_staff_sin_sesion_origen_400_no_regresion(
-    client, db_session, staff
-):
+def test_alta_staff_sin_sesion_origen_400_no_regresion(client, db_session, staff):
     """# AC R1 S3: sin sesión, `origen` en el body público es 400 por campo."""
     resp = client.post(
         "/api/turnos", json=_body_staff(staff["p1"].id, inicio=_local(10))
@@ -300,9 +290,7 @@ def test_alta_staff_sin_sesion_origen_400_no_regresion(
     assert any(d["campo"] == "origen" for d in resp.json()["detail"])
 
 
-def test_alta_staff_sin_sesion_body_publico_sigue_online(
-    client, db_session, staff
-):
+def test_alta_staff_sin_sesion_body_publico_sigue_online(client, db_session, staff):
     """# AC R1 S4: sin sesión el contrato público crea `origen=online`."""
     from app.models.auditoria import AuditoriaTurno
     from app.models.turno import Turno, TurnoOrigen
@@ -337,9 +325,7 @@ def test_alta_staff_odontologo_403(client, db_session, staff):
     assert db_session.query(Paciente).count() == 0
 
 
-def test_alta_staff_recepcion_201_origen_recepcion_actor(
-    client, db_session, staff
-):
+def test_alta_staff_recepcion_201_origen_recepcion_actor(client, db_session, staff):
     """# AC R1 S1: 201 con origen recepcion, token persistido y auditoría."""
     from app.models.auditoria import AuditoriaTurno
     from app.models.paciente import Paciente
@@ -355,12 +341,7 @@ def test_alta_staff_recepcion_201_origen_recepcion_actor(
     assert turno.estado == TurnoEstado.reservado
     assert turno.origen == TurnoOrigen.recepcion
     assert turno.token_cancelacion is not None
-    assert (
-        db_session.query(Paciente)
-        .filter(Paciente.dni == "30999123")
-        .count()
-        == 1
-    )
+    assert db_session.query(Paciente).filter(Paciente.dni == "30999123").count() == 1
     assert resp.json()["notificaciones_encoladas"] is True
     auditoria = (
         db_session.query(AuditoriaTurno)
@@ -373,9 +354,7 @@ def test_alta_staff_recepcion_201_origen_recepcion_actor(
     assert auditoria.detalle["actor"]["rol"] == "recepcion"
 
 
-def test_alta_staff_profesional_inexistente_o_inactivo_404(
-    client, db_session, staff
-):
+def test_alta_staff_profesional_inexistente_o_inactivo_404(client, db_session, staff):
     """# AC R1 S8: profesional inexistente o inactivo → 404 sin crear."""
     from app.models.turno import Turno
 
@@ -383,9 +362,7 @@ def test_alta_staff_profesional_inexistente_o_inactivo_404(
     _login(client)
 
     for prof_id in (uuid.uuid4(), inactivo.id):
-        resp = client.post(
-            "/api/turnos", json=_body_staff(prof_id, inicio=_local(10))
-        )
+        resp = client.post("/api/turnos", json=_body_staff(prof_id, inicio=_local(10)))
         assert resp.status_code == 404
     assert db_session.query(Turno).count() == 0
 
@@ -479,9 +456,7 @@ def test_reprogramar_campo_extra_400(client, db_session, staff):
     )
 
     assert resp.status_code == 400
-    assert any(
-        d["campo"] == "profesional_id" for d in resp.json()["detail"]
-    )
+    assert any(d["campo"] == "profesional_id" for d in resp.json()["detail"])
 
 
 def test_correccion_paciente_body_sin_campos_400(client, db_session, staff):
@@ -496,9 +471,7 @@ def test_correccion_paciente_body_sin_campos_400(client, db_session, staff):
 
 
 @pytest.mark.parametrize("campo", ["nombre", "email"])
-def test_correccion_paciente_nombre_email_400(
-    client, db_session, staff, campo
-):
+def test_correccion_paciente_nombre_email_400(client, db_session, staff, campo):
     """# AC R4 S7: `nombre`/`email` fuera del contrato → 400 por campo."""
     _, _, turno = _escenario(db_session)
     _login(client)
@@ -516,9 +489,7 @@ def test_patch_estado_desconocido_400(client, db_session, staff):
     _, _, turno = _escenario(db_session)
     _login(client)
 
-    resp = client.patch(
-        f"/api/turnos/{turno.id}/estado", json={"estado": "en_espera"}
-    )
+    resp = client.patch(f"/api/turnos/{turno.id}/estado", json={"estado": "en_espera"})
 
     assert resp.status_code == 400
     assert any(d["campo"] == "estado" for d in resp.json()["detail"])
@@ -545,27 +516,19 @@ def test_ficha_cursor_invalido_400(client, db_session, staff):
     )
 
     assert resp.status_code == 400
-    assert any(
-        d["campo"] == "historial_cursor" for d in resp.json()["detail"]
-    )
+    assert any(d["campo"] == "historial_cursor" for d in resp.json()["detail"])
 
 
 @pytest.mark.parametrize("limite", [0, 101])
-def test_ficha_historial_limit_fuera_rango_400(
-    client, db_session, staff, limite
-):
+def test_ficha_historial_limit_fuera_rango_400(client, db_session, staff, limite):
     """# AC R6 S3: `historial_limit` 1–100; fuera de rango → 400."""
     _, _, turno = _escenario(db_session)
     _login(client)
 
-    resp = client.get(
-        f"/api/turnos/{turno.id}", params={"historial_limit": limite}
-    )
+    resp = client.get(f"/api/turnos/{turno.id}", params={"historial_limit": limite})
 
     assert resp.status_code == 400
-    assert any(
-        d["campo"] == "historial_limit" for d in resp.json()["detail"]
-    )
+    assert any(d["campo"] == "historial_limit" for d in resp.json()["detail"])
 
 
 def test_reprogramar_inicio_pasado_400(client, db_session, staff):
@@ -599,9 +562,7 @@ def test_reprogramar_inicio_sin_zona_400(client, db_session, staff):
 # --- §2 Reprogramación con anti-solape -------------------------------------
 
 
-def test_reprogramar_mismo_profesional_200_audita_cambios(
-    client, db_session, staff
-):
+def test_reprogramar_mismo_profesional_200_audita_cambios(client, db_session, staff):
     """# AC R2 S1: mueve inicio/fin conservando profesional, estado y token."""
     prof, _, turno = _escenario(db_session)
     token_previo = turno.token_cancelacion
@@ -622,9 +583,10 @@ def test_reprogramar_mismo_profesional_200_audita_cambios(
     assert actual.token_cancelacion == token_previo
     auditoria = _auditoria(db_session, turno.id)[-1]
     assert auditoria.accion == "reprogramar"
-    assert auditoria.detalle["cambios"]["inicio"]["despues"] == _local(
-        13
-    ).astimezone(UTC).isoformat()
+    assert (
+        auditoria.detalle["cambios"]["inicio"]["despues"]
+        == _local(13).astimezone(UTC).isoformat()
+    )
 
 
 def test_reprogramar_cambio_duracion_200(client, db_session, staff):
@@ -632,9 +594,7 @@ def test_reprogramar_cambio_duracion_200(client, db_session, staff):
     _, _, turno = _escenario(db_session, estado="confirmado", hora=9)
     _login(client)
 
-    resp = client.put(
-        f"/api/turnos/{turno.id}", json={"duracion_min": 60}
-    )
+    resp = client.put(f"/api/turnos/{turno.id}", json={"duracion_min": 60})
 
     assert resp.status_code == 200
     db_session.expire_all()
@@ -649,16 +609,12 @@ def test_reprogramar_cambio_duracion_200(client, db_session, staff):
 
 
 @pytest.mark.parametrize("duracion", [0, -30, 40])
-def test_reprogramar_duracion_invalida_400(
-    client, db_session, staff, duracion
-):
+def test_reprogramar_duracion_invalida_400(client, db_session, staff, duracion):
     """# AC R2 S7: duración no positiva/múltiplo → 400 en `duracion_min`."""
     _, _, turno = _escenario(db_session)
     _login(client)
 
-    resp = client.put(
-        f"/api/turnos/{turno.id}", json={"duracion_min": duracion}
-    )
+    resp = client.put(f"/api/turnos/{turno.id}", json={"duracion_min": duracion})
 
     assert resp.status_code == 400
     assert any(d["campo"] == "duracion_min" for d in resp.json()["detail"])
@@ -700,9 +656,7 @@ def test_reprogramar_slot_no_disponible_409(client, db_session, staff):
 
 
 @pytest.mark.parametrize("estado", ["cancelado", "atendido", "ausente"])
-def test_reprogramar_turno_no_editable_422(
-    client, db_session, staff, estado
-):
+def test_reprogramar_turno_no_editable_422(client, db_session, staff, estado):
     """# AC R2 S5: estados cerrados no son editables."""
     _, _, turno = _escenario(db_session, estado=estado)
     _login(client)
@@ -715,9 +669,7 @@ def test_reprogramar_turno_no_editable_422(
     assert resp.json()["detail"]["codigo"] == "turno_no_editable"
 
 
-def test_reprogramar_mismos_valores_noop_200_sin_auditoria(
-    client, db_session, staff
-):
+def test_reprogramar_mismos_valores_noop_200_sin_auditoria(client, db_session, staff):
     """# AC R2 S8: mismos valores → 200 no-op sin auditoría ni updated_at."""
     _, _, turno = _escenario(db_session)
     _login(client)
@@ -742,9 +694,7 @@ def test_reprogramar_mismos_valores_noop_200_sin_auditoria(
 # --- §3 Cancelación staff normal y forzada ---------------------------------
 
 
-def test_cancelacion_staff_mas_3h_200_audita_cancelar(
-    client, db_session, staff
-):
+def test_cancelacion_staff_mas_3h_200_audita_cancelar(client, db_session, staff):
     """# AC R3 S1: ≥3 h → cancelado, mail y auditoría `cancelar`."""
     _, _, turno = _escenario(db_session, hora=12)  # 4 h de anticipación
     _login(client)
@@ -765,7 +715,8 @@ def test_cancelacion_staff_mas_3h_con_motivo_audita(client, db_session, staff):
     _, _, turno = _escenario(db_session, hora=12)
     _login(client)
 
-    resp = _delete(client, 
+    resp = _delete(
+        client,
         f"/api/turnos/{turno.id}",
         json={"motivo": "El paciente avisó por teléfono"},
     )
@@ -788,14 +739,13 @@ def test_cancelacion_staff_exactamente_3h_normal(client, db_session, staff):
     assert auditoria.accion == "cancelar"
 
 
-def test_cancelacion_staff_menos_3h_con_motivo_forzar_200(
-    client, db_session, staff
-):
+def test_cancelacion_staff_menos_3h_con_motivo_forzar_200(client, db_session, staff):
     """# AC R3 S4: <3 h con motivo → 200 y `forzar_cancelacion`."""
     _, _, turno = _escenario(db_session, hora=10)  # 2 h
     _login(client)
 
-    resp = _delete(client, 
+    resp = _delete(
+        client,
         f"/api/turnos/{turno.id}",
         json={"motivo": "El paciente no puede asistir"},
     )
@@ -819,15 +769,11 @@ def test_cancelacion_staff_menos_3h_sin_motivo_422(client, db_session, staff):
     assert resp.json()["detail"]["codigo"] == "motivo_requerido"
     assert _estado(db_session, turno).value == "reservado"
     assert len(_auditoria(db_session, turno.id)) == antes
-    assert not any(
-        n.tipo.value == "cancelacion" for n in _notifs(db_session, turno.id)
-    )
+    assert not any(n.tipo.value == "cancelacion" for n in _notifs(db_session, turno.id))
 
 
 @pytest.mark.parametrize("motivo", ["", "   ", "ab"])
-def test_cancelacion_staff_motivo_vacio_o_corto_400(
-    client, db_session, staff, motivo
-):
+def test_cancelacion_staff_motivo_vacio_o_corto_400(client, db_session, staff, motivo):
     """# AC R3 S6: motivo vacío o corto → 400 en `motivo`."""
     _, _, turno = _escenario(db_session, hora=10)
     _login(client)
@@ -838,15 +784,15 @@ def test_cancelacion_staff_motivo_vacio_o_corto_400(
     assert any(d["campo"] == "motivo" for d in resp.json()["detail"])
 
 
-def test_cancelacion_staff_token_publico_precedencia(
-    client, db_session, staff
-):
+def test_cancelacion_staff_token_publico_precedencia(client, db_session, staff):
     """# AC R3 S10: `?token=` ejecuta C-06 con `actor_id=NULL`."""
     _, _, turno = _escenario(db_session, hora=12)
     _login(client)
 
-    resp = _delete(client, 
-        f"/api/turnos/{turno.id}", params={"token": str(turno.token_cancelacion)}
+    resp = _delete(
+        client,
+        f"/api/turnos/{turno.id}",
+        params={"token": str(turno.token_cancelacion)},
     )
 
     assert resp.status_code == 200
@@ -854,20 +800,18 @@ def test_cancelacion_staff_token_publico_precedencia(
     assert auditoria.actor_id is None
 
 
-def test_cancelacion_staff_sin_sesion_401_odontologo_403(
-    client, db_session, staff
-):
+def test_cancelacion_staff_sin_sesion_401_odontologo_403(client, db_session, staff):
     """# AC R3 S11: sin sesión 401; odontólogo 403; el turno no cambia."""
     _, _, turno = _escenario(db_session, hora=12)
 
-    sin_sesion = _delete(client, 
-        f"/api/turnos/{turno.id}", json={"motivo": "motivo ficticio"}
+    sin_sesion = _delete(
+        client, f"/api/turnos/{turno.id}", json={"motivo": "motivo ficticio"}
     )
     assert sin_sesion.status_code == 401
 
     _login(client, ODONTO)
-    ajeno = _delete(client, 
-        f"/api/turnos/{turno.id}", json={"motivo": "motivo ficticio"}
+    ajeno = _delete(
+        client, f"/api/turnos/{turno.id}", json={"motivo": "motivo ficticio"}
     )
     assert ajeno.status_code == 403
     assert _estado(db_session, turno).value == "reservado"
@@ -887,9 +831,7 @@ def test_cancelacion_staff_ya_cancelado_422(client, db_session, staff):
 
 
 @pytest.mark.parametrize("estado", ["atendido", "ausente"])
-def test_cancelacion_staff_atendido_ausente_422(
-    client, db_session, staff, estado
-):
+def test_cancelacion_staff_atendido_ausente_422(client, db_session, staff, estado):
     """# AC R3 S8: atendido/ausente → 422 `turno_no_cancelable`."""
     _, _, turno = _escenario(db_session, estado=estado)
     _login(client)
@@ -919,8 +861,8 @@ def test_cancelacion_staff_body_extra_400(client, db_session, staff):
     _, _, turno = _escenario(db_session, hora=12)
     _login(client)
 
-    resp = _delete(client, 
-        f"/api/turnos/{turno.id}", json={"motivo": "válido", "forzar": True}
+    resp = _delete(
+        client, f"/api/turnos/{turno.id}", json={"motivo": "válido", "forzar": True}
     )
 
     assert resp.status_code == 400
@@ -930,9 +872,7 @@ def test_cancelacion_staff_body_extra_400(client, db_session, staff):
 # --- §4 Corrección de datos del paciente -----------------------------------
 
 
-def test_correccion_paciente_telefono_os_200_audita(
-    client, db_session, staff
-):
+def test_correccion_paciente_telefono_os_200_audita(client, db_session, staff):
     """# AC R4 S1: teléfono/OS nuevos persisten y auditan antes→después."""
     _, pac, turno = _escenario(db_session)
     telefono_previo = pac.telefono
@@ -951,23 +891,17 @@ def test_correccion_paciente_telefono_os_200_audita(
     auditoria = _auditoria(db_session, turno.id)[-1]
     assert auditoria.accion == "editar_paciente"
     assert auditoria.detalle["cambios"]["telefono"]["antes"] == telefono_previo
-    assert auditoria.detalle["cambios"]["telefono"]["despues"] == (
-        "+5491100009999"
-    )
+    assert auditoria.detalle["cambios"]["telefono"]["despues"] == ("+5491100009999")
 
 
-def test_correccion_paciente_dni_duplicado_409_sin_fusion(
-    client, db_session, staff
-):
+def test_correccion_paciente_dni_duplicado_409_sin_fusion(client, db_session, staff):
     """# AC R4 S3: DNI de otro paciente → 409 sin fusionar ni auditar."""
     _, pac_a, turno = _escenario(db_session)
     pac_b = _paciente(db_session, dni="30111222")
     _login(client)
     antes = len(_auditoria(db_session, turno.id))
 
-    resp = client.put(
-        f"/api/turnos/{turno.id}/paciente", json={"dni": pac_b.dni}
-    )
+    resp = client.put(f"/api/turnos/{turno.id}/paciente", json={"dni": pac_b.dni})
 
     assert resp.status_code == 409
     assert resp.json()["detail"]["codigo"] == "dni_duplicado"
@@ -984,9 +918,7 @@ def test_correccion_paciente_mismo_dni_noop_200(client, db_session, staff):
     antes = len(_auditoria(db_session, turno.id))
     actualizado_previo = pac.updated_at
 
-    resp = client.put(
-        f"/api/turnos/{turno.id}/paciente", json={"dni": pac.dni}
-    )
+    resp = client.put(f"/api/turnos/{turno.id}/paciente", json={"dni": pac.dni})
 
     assert resp.status_code == 200
     assert len(_auditoria(db_session, turno.id)) == antes
@@ -995,25 +927,19 @@ def test_correccion_paciente_mismo_dni_noop_200(client, db_session, staff):
 
 
 @pytest.mark.parametrize("telefono", ["", "   "])
-def test_correccion_paciente_campo_vacio_400(
-    client, db_session, staff, telefono
-):
+def test_correccion_paciente_campo_vacio_400(client, db_session, staff, telefono):
     """# AC R4 S5: vacío o solo espacios → 400 en `telefono`."""
     _, _, turno = _escenario(db_session)
     _login(client)
 
-    resp = client.put(
-        f"/api/turnos/{turno.id}/paciente", json={"telefono": telefono}
-    )
+    resp = client.put(f"/api/turnos/{turno.id}/paciente", json={"telefono": telefono})
 
     assert resp.status_code == 400
     assert any(d["campo"] == "telefono" for d in resp.json()["detail"])
 
 
 @pytest.mark.parametrize("dni", ["30ABC001", "123"])
-def test_correccion_paciente_dni_formato_invalido_400(
-    client, db_session, staff, dni
-):
+def test_correccion_paciente_dni_formato_invalido_400(client, db_session, staff, dni):
     """# AC R4 S2: DNI con formato inválido → 400 en `dni`."""
     _, _, turno = _escenario(db_session)
     _login(client)
@@ -1040,9 +966,7 @@ def test_correccion_paciente_odontologo_403(client, db_session, staff):
     assert db_session.get(type(pac), pac.id).telefono == telefono_previo
 
 
-def test_correccion_paciente_visible_en_otros_turnos(
-    client, db_session, staff
-):
+def test_correccion_paciente_visible_en_otros_turnos(client, db_session, staff):
     """# AC R4 S9: la fila compartida refleja el cambio en todo el paciente."""
     prof, pac, turno = _escenario(db_session, hora=12)
     otro = _turno(db_session, prof, pac, hora=14)
@@ -1060,9 +984,7 @@ def test_correccion_paciente_visible_en_otros_turnos(
     assert db_session.get(type(pac), pac.id).telefono == "+5491100006666"
 
 
-def test_correccion_paciente_turno_cancelado_permitida(
-    client, db_session, staff
-):
+def test_correccion_paciente_turno_cancelado_permitida(client, db_session, staff):
     """# AC R4 S10: corregir un turno cancelado está permitido y audita."""
     _, pac, turno = _escenario(db_session, estado="cancelado")
     _login(client)
@@ -1085,9 +1007,7 @@ def test_patch_estado_reservado_confirmado_200(client, db_session, staff):
     _, _, turno = _escenario(db_session)
     _login(client)
 
-    resp = client.patch(
-        f"/api/turnos/{turno.id}/estado", json={"estado": "confirmado"}
-    )
+    resp = client.patch(f"/api/turnos/{turno.id}/estado", json={"estado": "confirmado"})
 
     assert resp.status_code == 200
     assert resp.json()["estado_previo"] == "reservado"
@@ -1104,9 +1024,7 @@ def test_patch_estado_confirmado_atendido_200(client, db_session, staff):
     _, _, turno = _escenario(db_session, estado="confirmado")
     _login(client)
 
-    resp = client.patch(
-        f"/api/turnos/{turno.id}/estado", json={"estado": "atendido"}
-    )
+    resp = client.patch(f"/api/turnos/{turno.id}/estado", json={"estado": "atendido"})
 
     assert resp.status_code == 200
     assert _estado(db_session, turno).value == "atendido"
@@ -1117,26 +1035,20 @@ def test_patch_estado_confirmado_ausente_200(client, db_session, staff):
     _, _, turno = _escenario(db_session, estado="confirmado")
     _login(client)
 
-    resp = client.patch(
-        f"/api/turnos/{turno.id}/estado", json={"estado": "ausente"}
-    )
+    resp = client.patch(f"/api/turnos/{turno.id}/estado", json={"estado": "ausente"})
 
     assert resp.status_code == 200
     assert _estado(db_session, turno).value == "ausente"
 
 
 @pytest.mark.parametrize("destino", ["atendido", "ausente"])
-def test_patch_estado_reservado_terminal_422(
-    client, db_session, staff, destino
-):
+def test_patch_estado_reservado_terminal_422(client, db_session, staff, destino):
     """# AC R5 S3: reservado ? terminal ? 422 `transicion_invalida`."""
     _, _, turno = _escenario(db_session)
     _login(client)
     antes = len(_auditoria(db_session, turno.id))
 
-    resp = client.patch(
-        f"/api/turnos/{turno.id}/estado", json={"estado": destino}
-    )
+    resp = client.patch(f"/api/turnos/{turno.id}/estado", json={"estado": destino})
 
     assert resp.status_code == 422
     assert resp.json()["detail"]["codigo"] == "transicion_invalida"
@@ -1154,9 +1066,7 @@ def test_patch_estado_reservado_target_422(
     _, _, turno = _escenario(db_session, estado=estado_actual)
     _login(client)
 
-    resp = client.patch(
-        f"/api/turnos/{turno.id}/estado", json={"estado": destino}
-    )
+    resp = client.patch(f"/api/turnos/{turno.id}/estado", json={"estado": destino})
 
     assert resp.status_code == 422
     assert resp.json()["detail"]["codigo"] == "transicion_invalida"
@@ -1167,26 +1077,20 @@ def test_patch_estado_cancelado_target_422(client, db_session, staff):
     _, _, turno = _escenario(db_session)
     _login(client)
 
-    resp = client.patch(
-        f"/api/turnos/{turno.id}/estado", json={"estado": "cancelado"}
-    )
+    resp = client.patch(f"/api/turnos/{turno.id}/estado", json={"estado": "cancelado"})
 
     assert resp.status_code == 422
     assert resp.json()["detail"]["codigo"] == "transicion_invalida"
 
 
 @pytest.mark.parametrize("previo", ["cancelado", "atendido", "ausente"])
-def test_patch_estado_terminal_sin_transiciones_422(
-    client, db_session, staff, previo
-):
+def test_patch_estado_terminal_sin_transiciones_422(client, db_session, staff, previo):
     """# AC R5 S5: estados terminales no tienen transiciones salientes."""
     _, _, turno = _escenario(db_session, estado=previo)
     _login(client)
     antes = len(_auditoria(db_session, turno.id))
 
-    resp = client.patch(
-        f"/api/turnos/{turno.id}/estado", json={"estado": "confirmado"}
-    )
+    resp = client.patch(f"/api/turnos/{turno.id}/estado", json={"estado": "confirmado"})
 
     assert resp.status_code == 422
     assert len(_auditoria(db_session, turno.id)) == antes
@@ -1194,13 +1098,13 @@ def test_patch_estado_terminal_sin_transiciones_422(
 
 def test_patch_estado_odontologo_propio_200(client, db_session, staff):
     """# AC R5 S6: odont�logo propio ? reservado a confirmado permitido."""
-    pac = _paciente(db_session)
-    turno = _turno(db_session, staff["p1"], pac, hora=14)
+    pac = _paciente(db_session)
+
+    turno = _turno(db_session, staff["p1"], pac, hora=14)
+
     _login(client, ODONTO)
 
-    resp = client.patch(
-        f"/api/turnos/{turno.id}/estado", json={"estado": "confirmado"}
-    )
+    resp = client.patch(f"/api/turnos/{turno.id}/estado", json={"estado": "confirmado"})
 
     assert resp.status_code == 200
     assert _estado(db_session, turno).value == "confirmado"
@@ -1212,9 +1116,7 @@ def test_patch_estado_odontologo_ajeno_403(client, db_session, staff):
     _login(client, ODONTO)
     antes = len(_auditoria(db_session, turno.id))
 
-    resp = client.patch(
-        f"/api/turnos/{turno.id}/estado", json={"estado": "confirmado"}
-    )
+    resp = client.patch(f"/api/turnos/{turno.id}/estado", json={"estado": "confirmado"})
 
     assert resp.status_code == 403
     assert len(_auditoria(db_session, turno.id)) == antes
@@ -1226,9 +1128,7 @@ def test_patch_estado_odontologo_ausente_403(client, db_session, staff):
     turno = _turno(db_session, prof, pac, hora=14, estado="confirmado")
     _login(client, ODONTO)
 
-    resp = client.patch(
-        f"/api/turnos/{turno.id}/estado", json={"estado": "ausente"}
-    )
+    resp = client.patch(f"/api/turnos/{turno.id}/estado", json={"estado": "ausente"})
 
     assert resp.status_code == 403
     assert _estado(db_session, turno).value == "confirmado"
@@ -1239,9 +1139,7 @@ def test_patch_estado_admin_hereda(client, db_session, staff):
     _, _, turno = _escenario(db_session)
     _login(client, ADMIN)
 
-    resp = client.patch(
-        f"/api/turnos/{turno.id}/estado", json={"estado": "confirmado"}
-    )
+    resp = client.patch(f"/api/turnos/{turno.id}/estado", json={"estado": "confirmado"})
 
     assert resp.status_code == 200
 
@@ -1266,9 +1164,7 @@ def _auditoria_manual(
     return fila
 
 
-def test_ficha_recepcion_datos_e_historial_ascendente(
-    client, db_session, staff
-):
+def test_ficha_recepcion_datos_e_historial_ascendente(client, db_session, staff):
     """# AC R6 S1/S2: ficha completa y auditor�a ascendente."""
     prof, pac, turno = _escenario(db_session)
     for hora, accion in ((9, "crear"), (10, "reprogramar"), (11, "cancelar")):
@@ -1306,9 +1202,7 @@ def test_ficha_historial_keyset_sin_offset(client, db_session, staff):
         )
     _login(client)
 
-    primera = client.get(
-        f"/api/turnos/{turno.id}", params={"historial_limit": 2}
-    )
+    primera = client.get(f"/api/turnos/{turno.id}", params={"historial_limit": 2})
     assert primera.status_code == 200
     pagina = primera.json()["auditoria"]
     assert [i["accion"] for i in pagina["items"]] == ["accion_0", "accion_1"]
@@ -1388,9 +1282,7 @@ def test_ficha_id_malformado_404(client, db_session, staff):
 
 
 @pytest.mark.parametrize("metodo", ["get", "put", "patch"])
-def test_staff_endpoints_token_paciente_401(
-    client, db_session, staff, metodo
-):
+def test_staff_endpoints_token_paciente_401(client, db_session, staff, metodo):
     """# AC R7 S1: `?token=` no autentica staff (salvo DELETE p�blico)."""
     _, _, turno = _escenario(db_session)
     params = {"token": str(turno.token_cancelacion)}
@@ -1410,9 +1302,7 @@ def test_staff_endpoints_token_paciente_401(
     assert resp.status_code == 401
 
 
-def test_cookie_invalida_401_no_degrada_publico(
-    client, db_session, staff
-):
+def test_cookie_invalida_401_no_degrada_publico(client, db_session, staff):
     """# AC R7 S2: cookie inv�lida no cae al flujo p�blico."""
     client.cookies.set("session", "token-invalido")
 
@@ -1460,9 +1350,7 @@ def test_odontologo_escrituras_recepcion_403(client, db_session, staff):
     alta = client.post(
         "/api/turnos", json=_body_staff(staff["p1"].id, inicio=_local(10))
     )
-    reprogramar = client.put(
-        f"/api/turnos/{turno.id}", json={"duracion_min": 30}
-    )
+    reprogramar = client.put(f"/api/turnos/{turno.id}", json={"duracion_min": 30})
     corregir = client.put(
         f"/api/turnos/{turno.id}/paciente", json={"telefono": "+5491100003333"}
     )
@@ -1497,9 +1385,10 @@ def test_admin_hereda_operaciones_recepcion(client, db_session, staff):
 
 def test_contratos_publicos_intactos(client, db_session, staff):
     """# AC R7 S6: POST p�blico y DELETE por token conservan C-05/C-06."""
-    publica = client.post(
-        "/api/turnos", json=_body_publico(staff["p1"].id, inicio=_local(12))
-    )
+    publica = client.post(
+        "/api/turnos", json=_body_publico(staff["p1"].id, inicio=_local(12))
+    )
+
     assert publica.status_code == 201
     token = publica.json()["token_cancelacion"]
 
@@ -1512,9 +1401,7 @@ def test_contratos_publicos_intactos(client, db_session, staff):
 # --- �8 Notificaciones (delta C-07) ----------------------------------------
 
 
-def test_alta_staff_encola_confirmacion_y_recordatorios(
-    client, db_session, staff
-):
+def test_alta_staff_encola_confirmacion_y_recordatorios(client, db_session, staff):
     """# AC R8 S1: alta staff encola la misma cascada que C-05."""
     from app.models.notificacion import NotifEstado, NotifTipo
 
@@ -1583,9 +1470,7 @@ def test_c07_no_envia_smtp(client, db_session, staff, monkeypatch):
     )
 
 
-def test_reprogramacion_descarta_obsoletas_y_encola_nuevas(
-    client, db_session, staff
-):
+def test_reprogramacion_descarta_obsoletas_y_encola_nuevas(client, db_session, staff):
     """# AC R8 S3: pendientes obsoletas ? fallida con prefijo; nuevas pendientes."""
     from app.models.notificacion import NotifEstado, Notificacion, NotifTipo
 
@@ -1706,9 +1591,7 @@ def test_notif_descarte_solo_afecta_su_turno(client, db_session, staff):
     assert all(n.estado == NotifEstado.pendiente for n in ajenas)
 
 
-def test_notif_descarte_no_altera_intentos_ni_toca_enviadas(
-    client, db_session, staff
-):
+def test_notif_descarte_no_altera_intentos_ni_toca_enviadas(client, db_session, staff):
     """# AC R8 S5: descarte no cambia `intentos` ni pisotea enviadas."""
     from app.models.notificacion import NotifEstado, Notificacion, NotifTipo
     from app.modules.turnos import service
@@ -1767,35 +1650,28 @@ def test_worker_no_reenvia_descartadas(client, db_session, staff):
             self.llamadas.append(kwargs)
 
     sender = _Sender()
-    resumen = run_once(
-        db_session, sender, now=NOW.astimezone(UTC), batch_size=10
-    )
+    resumen = run_once(db_session, sender, now=NOW.astimezone(UTC), batch_size=10)
 
     assert sender.llamadas == []
     assert resumen.enviadas == 0
     db_session.expire_all()
-    assert (
-        db_session.get(Notificacion, descartada.id).estado
-        == NotifEstado.fallida
-    )
+    assert db_session.get(Notificacion, descartada.id).estado == NotifEstado.fallida
 
 
 # --- �9 Auditor�a append-only ----------------------------------------------
 
 
-@pytest.mark.parametrize(
-    "accion",
-    [
-        "crear",
-        "reprogramar",
-        "editar_paciente",
-        "cancelar",
-        "forzar_cancelacion",
-    ],
-)
-def test_auditoria_una_fila_por_mutacion_staff(
-    client, db_session, staff, accion
-):
+@pytest.mark.parametrize(
+    "accion",
+    [
+        "crear",
+        "reprogramar",
+        "editar_paciente",
+        "cancelar",
+        "forzar_cancelacion",
+    ],
+)
+def test_auditoria_una_fila_por_mutacion_staff(client, db_session, staff, accion):
     """# AC R9 S1/S4: cada mutaci�n staff produce exactamente una fila."""
     if accion == "crear":
         _login(client)
@@ -1828,11 +1704,7 @@ def test_auditoria_una_fila_por_mutacion_staff(
         )
         turno_id = turno.id
         _login(client)
-        body = (
-            {"motivo": "motivo ficticio"}
-            if accion == "forzar_cancelacion"
-            else {}
-        )
+        body = {"motivo": "motivo ficticio"} if accion == "forzar_cancelacion" else {}
         resp = _delete(client, f"/api/turnos/{turno.id}", json=body)
         esperada = accion
 
@@ -1842,10 +1714,8 @@ def test_auditoria_una_fila_por_mutacion_staff(
     assert filas[0].actor_id == staff["users"]["recepcion"].id
 
 
-@pytest.mark.parametrize("caso", ["400", "401", "403", "409", "422"])
-def test_auditoria_solicitud_rechazada_no_escribe(
-    client, db_session, staff, caso
-):
+@pytest.mark.parametrize("caso", ["400", "401", "403", "409", "422"])
+def test_auditoria_solicitud_rechazada_no_escribe(client, db_session, staff, caso):
     """# AC R9 S2: 400/401/403/409/422 no agregan filas."""
     prof, pac, turno = _escenario(db_session, hora=12)
     turno_id = turno.id
@@ -1858,14 +1728,10 @@ def test_auditoria_solicitud_rechazada_no_escribe(
             json={"inicio": _local(13).isoformat(), "extra": True},
         )
     elif caso == "401":
-        resp = client.put(
-            f"/api/turnos/{turno.id}", json={"duracion_min": 30}
-        )
+        resp = client.put(f"/api/turnos/{turno.id}", json={"duracion_min": 30})
     elif caso == "403":
         _login(client, ODONTO)
-        resp = client.put(
-            f"/api/turnos/{turno.id}", json={"duracion_min": 30}
-        )
+        resp = client.put(f"/api/turnos/{turno.id}", json={"duracion_min": 30})
     elif caso == "409":
         _turno(db_session, prof, pac, hora=13)
         _login(client)
@@ -1886,9 +1752,7 @@ def test_auditoria_solicitud_rechazada_no_escribe(
     assert len(_auditoria(db_session, turno_id)) == antes
 
 
-def test_auditoria_detalle_antes_despues_y_actor(
-    client, db_session, staff
-):
+def test_auditoria_detalle_antes_despues_y_actor(client, db_session, staff):
     """# AC R9 S3: `detalle` guarda antes/despu�s y actor con rol."""
     _, _, turno = _escenario(db_session)
     _login(client)
@@ -1935,7 +1799,7 @@ def test_auditoria_append_only_trigger(client, db_session, staff):
                 {"id": fila.id},
             )
 
-    assert db_session.get(type(fila), fila.id).accion == "crear"
+    assert db_session.get(type(fila), fila.id).accion == "crear"
 
 
 # --- §10 Concurrencia (autoridad final DB) ---------------------------------
@@ -2029,8 +1893,7 @@ def _limpiar_c07_concurrencia(test_engine, datos):
     try:
         sesion.execute(
             text(
-                "ALTER TABLE auditoria_turno "
-                "DISABLE TRIGGER auditoria_no_update_delete"
+                "ALTER TABLE auditoria_turno DISABLE TRIGGER auditoria_no_update_delete"
             )
         )
         for turno in turnos:
@@ -2042,13 +1905,9 @@ def _limpiar_c07_concurrencia(test_engine, datos):
                 text("DELETE FROM notificacion WHERE turno_id = :t"),
                 {"t": turno},
             )
-            sesion.execute(
-                text("DELETE FROM turno WHERE id = :t"), {"t": turno}
-            )
+            sesion.execute(text("DELETE FROM turno WHERE id = :t"), {"t": turno})
         for dni in datos["dnis"]:
-            sesion.execute(
-                text("DELETE FROM paciente WHERE dni = :dni"), {"dni": dni}
-            )
+            sesion.execute(text("DELETE FROM paciente WHERE dni = :dni"), {"dni": dni})
         sesion.execute(
             text("DELETE FROM disponibilidad WHERE profesional_id = :prof"),
             {"prof": str(datos["prof_id"])},
@@ -2063,8 +1922,7 @@ def _limpiar_c07_concurrencia(test_engine, datos):
         )
         sesion.execute(
             text(
-                "ALTER TABLE auditoria_turno "
-                "ENABLE TRIGGER auditoria_no_update_delete"
+                "ALTER TABLE auditoria_turno ENABLE TRIGGER auditoria_no_update_delete"
             )
         )
         sesion.commit()
@@ -2108,8 +1966,7 @@ def test_reprogramar_dos_concurrentes_un_ganador(test_engine):
             sesion.close()
 
     hilos = [
-        threading.Thread(target=mover, args=(turno_id,))
-        for turno_id in datos["turnos"]
+        threading.Thread(target=mover, args=(turno_id,)) for turno_id in datos["turnos"]
     ]
     for hilo in hilos:
         hilo.start()
@@ -2196,4 +2053,4 @@ def test_patch_estado_dos_concurrentes_una_transicion(test_engine):
         finally:
             verificacion.close()
     finally:
-        _limpiar_c07_concurrencia(test_engine, datos)
+        _limpiar_c07_concurrencia(test_engine, datos)

@@ -74,9 +74,7 @@ def test_alta_usuario_password_corta_400():
     """# AC SA-R1: password de 7 → 400 en `password`."""
     from app.modules.usuarios_staff.schemas import UsuarioStaffCreate
 
-    detalle = _detalle_body(
-        UsuarioStaffCreate, _body(password="1234567")
-    )
+    detalle = _detalle_body(UsuarioStaffCreate, _body(password="1234567"))
     assert "password" in _campos(detalle)
 
 

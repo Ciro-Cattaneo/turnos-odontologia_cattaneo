@@ -79,11 +79,43 @@ La revisión esperada es `002_agenda_meta` (`alembic current`).
 ```bash
 docker compose config          # valida el compose
 docker compose build web
+docker compose up -d db        # esperar el healthcheck de db
+docker compose run --rm web alembic upgrade head
+docker compose run --rm web python scripts/seed_admin.py   # admin inicial
 docker compose up -d
 docker compose ps              # web y db en running/healthy
 ```
 
 Sólo `web` publica `WEB_PORT`. La base no mapea `5432` al host.
+
+### 5.0 Variables: `.env` + `.env.docker`
+
+El compose carga dos `env_file` por servicio, en este orden: `.env` y, si
+existe, `.env.docker` (**gana el último**). La idea es no duplicar secretos ni
+romper la demo local:
+
+- `.env` — config de la demo local (`iniciar-demo.ps1`), con `DATABASE_URL`
+  apuntando a `localhost:5432`.
+- `.env.docker` — overrides de Docker (gitignored): `DATABASE_URL` con host
+  `db:5432`, `POSTGRES_PASSWORD` **con la misma password** que esa URL,
+  `FRONTEND_URL` y `NOTIF_WORKER_ENABLED`.
+
+`POSTGRES_PASSWORD` se inyecta por `env_file` (no por interpolación), así que
+`db` y `web` leen exactamente el mismo valor y no hay fallback silencioso a una
+password por defecto. Requiere **Compose >= 2.24** (`env_file` con `required`).
+Si no existe `.env.docker`, el compose arranca sólo con `.env` (que ya trae
+`POSTGRES_PASSWORD` cuando se copió `.env.example`).
+
+> Postgres aplica `POSTGRES_PASSWORD` **sólo al inicializar el volumen**
+> `pgdata`. Si cambiás la password después del primer `up`, hay que recrear la
+> base (`docker compose down -v`) o el `web` falla con error de autenticación.
+
+Scripts operativos dentro de la imagen (el Dockerfile copia `backend/scripts/`):
+
+```bash
+docker compose run --rm web python scripts/seed_admin.py     # idempotente
+docker compose run --rm web python scripts/demo_bootstrap.py # demo; exige ENV != prod
+```
 
 ### 5.1 TLS en un proxy del host
 

@@ -83,9 +83,9 @@ def _crear_notificacion(
         tipo=NotifTipo(tipo),
         estado=estado or NotifEstado.pendiente,
         intentos=intentos,
-        payload=payload if payload is not None else _payload(
-            turno, tipo=tipo, enviar_en=enviar_en
-        ),
+        payload=payload
+        if payload is not None
+        else _payload(turno, tipo=tipo, enviar_en=enviar_en),
         error=error,
     )
     db_session.add(notif)
@@ -267,12 +267,8 @@ def test_worker_turno_cancelado_no_envia_recordatorio(db_session):
     """D-8: recordatorio con turno cancelado → fallida/turno_cancelado, sin SMTP."""
     from app.models.turno import TurnoEstado
 
-    _prof, _pac, turno = _dependencias(
-        db_session, estado_turno=TurnoEstado.cancelado
-    )
-    notif = _crear_notificacion(
-        db_session, turno, tipo="recordatorio_2h", intentos=1
-    )
+    _prof, _pac, turno = _dependencias(db_session, estado_turno=TurnoEstado.cancelado)
+    notif = _crear_notificacion(db_session, turno, tipo="recordatorio_2h", intentos=1)
     sender = FakeSender()
 
     resumen = _run(db_session, sender)
@@ -289,12 +285,8 @@ def test_worker_turno_atendido_descarta_recordatorio(db_session):
     """D-8: turno atendido/ausente → descarte sin llamar SMTP."""
     from app.models.turno import TurnoEstado
 
-    _prof, _pac, turno = _dependencias(
-        db_session, estado_turno=TurnoEstado.atendido
-    )
-    notif = _crear_notificacion(
-        db_session, turno, tipo="recordatorio_24h", intentos=0
-    )
+    _prof, _pac, turno = _dependencias(db_session, estado_turno=TurnoEstado.atendido)
+    notif = _crear_notificacion(db_session, turno, tipo="recordatorio_24h", intentos=0)
     sender = FakeSender()
 
     _run(db_session, sender)
@@ -313,9 +305,7 @@ def test_worker_cancelacion_se_envia_con_turno_cancelado(db_session):
     """D-8: `cancelacion` se envía aunque el turno ya esté cancelado."""
     from app.models.turno import TurnoEstado
 
-    _prof, _pac, turno = _dependencias(
-        db_session, estado_turno=TurnoEstado.cancelado
-    )
+    _prof, _pac, turno = _dependencias(db_session, estado_turno=TurnoEstado.cancelado)
     notif = _crear_notificacion(db_session, turno, tipo="cancelacion")
     sender = FakeSender()
 
@@ -421,9 +411,7 @@ def test_worker_resumen_cuenta_resultados(db_session):
         intentos=2,
         payload=_payload(t3, paciente_email="falla@ficticio.test"),
     )
-    _crear_notificacion(
-        db_session, t4, tipo="recordatorio_24h", intentos=0
-    )
+    _crear_notificacion(db_session, t4, tipo="recordatorio_24h", intentos=0)
     _crear_notificacion(
         db_session,
         t5,

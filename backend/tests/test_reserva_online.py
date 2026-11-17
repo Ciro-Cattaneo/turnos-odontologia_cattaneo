@@ -61,7 +61,7 @@ def client_commit(test_engine):
             sesion.close()
 
     app.dependency_overrides[get_db] = _override
-    app.dependency_overrides[get_now_provider] = lambda: (lambda: NOW)
+    app.dependency_overrides[get_now_provider] = lambda: lambda: NOW
     with TestClient(app, base_url="https://testserver") as c:
         yield c
     app.dependency_overrides.clear()
@@ -73,7 +73,7 @@ def reloj(client):
     from app.main import app
     from app.modules.turnos.router import get_now_provider
 
-    app.dependency_overrides[get_now_provider] = lambda: (lambda: NOW)
+    app.dependency_overrides[get_now_provider] = lambda: lambda: NOW
     return NOW
 
 
@@ -100,7 +100,7 @@ def client_rate_limit(db_session, monkeypatch):
         yield db_session
 
     app.dependency_overrides[get_db] = _override
-    app.dependency_overrides[get_now_provider] = lambda: (lambda: NOW)
+    app.dependency_overrides[get_now_provider] = lambda: lambda: NOW
     app.dependency_overrides[get_client_ip] = lambda: ip["valor"]
     with TestClient(app, base_url="https://testserver") as c:
         yield c, ahora, ip
@@ -113,9 +113,7 @@ def _consumir_cupo(ip: str, veces: int) -> None:
 
     clave = f"turnos-publico:{ip}"
     for _ in range(veces):
-        pasa, _ = ratelimit.check_public_rate_limit(
-            clave, limit=10, window_s=60
-        )
+        pasa, _ = ratelimit.check_public_rate_limit(clave, limit=10, window_s=60)
         assert pasa, "el cupo se agotó antes de lo esperado"
 
 
@@ -172,11 +170,7 @@ def _turnos(db_session):
 def _turnos_prof(db_session, prof_id):
     from app.models.turno import Turno
 
-    return (
-        db_session.query(Turno)
-        .filter(Turno.profesional_id == prof_id)
-        .count()
-    )
+    return db_session.query(Turno).filter(Turno.profesional_id == prof_id).count()
 
 
 @pytest.mark.parametrize(
@@ -196,9 +190,7 @@ def test_reserva_inicio_no_futuro_400(client, db_session, reloj, inicio):
 def test_reserva_duracion_no_multiplo_400(client, db_session, reloj):
     """# AC R3 S1: `duracion_min` no múltiplo → 400 único en `duracion_min`."""
     prof = _prof(db_session, duracion=30)
-    resp = client.post(
-        "/api/turnos", json=_body(prof.id, duracion_min=40)
-    )
+    resp = client.post("/api/turnos", json=_body(prof.id, duracion_min=40))
     assert resp.status_code == 400
     detalle = resp.json()["detail"]
     assert len(detalle) == 1
@@ -208,14 +200,10 @@ def test_reserva_duracion_no_multiplo_400(client, db_session, reloj):
 
 
 @pytest.mark.parametrize("duracion", [0, -30], ids=["cero", "negativa"])
-def test_reserva_duracion_cero_o_negativa_400(
-    client, db_session, reloj, duracion
-):
+def test_reserva_duracion_cero_o_negativa_400(client, db_session, reloj, duracion):
     """# AC R3 S2: duración 0/negativa → 400 único en `duracion_min`."""
     prof = _prof(db_session, duracion=30)
-    resp = client.post(
-        "/api/turnos", json=_body(prof.id, duracion_min=duracion)
-    )
+    resp = client.post("/api/turnos", json=_body(prof.id, duracion_min=duracion))
     assert resp.status_code == 400
     detalle = resp.json()["detail"]
     assert len(detalle) == 1
@@ -288,16 +276,12 @@ def test_reserva_dni_existente_actualiza_contacto_sin_duplicar(
         "/api/turnos",
         json=_body(
             prof.id,
-            paciente=_paciente(
-                telefono="+5491100000099", email="nuevo@ficticio.test"
-            ),
+            paciente=_paciente(telefono="+5491100000099", email="nuevo@ficticio.test"),
         ),
     )
 
     assert resp.status_code == 201
-    filas = (
-        db_session.query(Paciente).filter(Paciente.dni == "30999001").all()
-    )
+    filas = db_session.query(Paciente).filter(Paciente.dni == "30999001").all()
     assert len(filas) == 1
     assert filas[0].id == paciente_id
     db_session.refresh(filas[0])
@@ -336,9 +320,7 @@ def test_reserva_paciente_inactivo_no_reactiva_201(client, db_session, reloj):
     )
 
     assert resp.status_code == 201
-    filas = (
-        db_session.query(Paciente).filter(Paciente.dni == "30999003").all()
-    )
+    filas = db_session.query(Paciente).filter(Paciente.dni == "30999003").all()
     assert len(filas) == 1
     db_session.refresh(filas[0])
     assert filas[0].activo is False
@@ -430,9 +412,9 @@ def test_reserva_anticipacion_mayor_24h_encola_tres(db_session):
     assert datetime.fromisoformat(
         por_tipo["recordatorio_24h"].payload["enviar_en"]
     ) == (inicio - timedelta(hours=24)).astimezone(UTC)
-    assert datetime.fromisoformat(
-        por_tipo["recordatorio_2h"].payload["enviar_en"]
-    ) == (inicio - timedelta(hours=2)).astimezone(UTC)
+    assert datetime.fromisoformat(por_tipo["recordatorio_2h"].payload["enviar_en"]) == (
+        inicio - timedelta(hours=2)
+    ).astimezone(UTC)
 
 
 def test_reserva_anticipacion_2_a_24h_omite_24h(db_session):
@@ -459,9 +441,7 @@ def test_reserva_anticipacion_2_a_24h_omite_24h(db_session):
     }
 
 
-def test_reserva_encolado_falla_no_bloquea_201(
-    client, db_session, reloj, monkeypatch
-):
+def test_reserva_encolado_falla_no_bloquea_201(client, db_session, reloj, monkeypatch):
     """# AC R6 S1: fallo del encolado no bloquea la reserva (201)."""
     from app.models.auditoria import AuditoriaTurno
     from app.models.notificacion import Notificacion
@@ -593,9 +573,7 @@ def _bloqueo(db_session, prof_id, desde, hasta, motivo="Bloqueo ficticio"):
     db_session.flush()
 
 
-def _turno_activo(
-    db_session, prof_id, inicio, fin, estado="reservado", dni="30999088"
-):
+def _turno_activo(db_session, prof_id, inicio, fin, estado="reservado", dni="30999088"):
     from app.models.paciente import Paciente
     from app.models.turno import TurnoEstado
     from tests.conftest import mk_turno
@@ -732,9 +710,7 @@ def _limpiar_concurrencia(test_engine, prof_id, dnis):
             {"prof": str(prof_id)},
         )
         for dni in dnis:
-            sesion.execute(
-                text("DELETE FROM paciente WHERE dni = :dni"), {"dni": dni}
-            )
+            sesion.execute(text("DELETE FROM paciente WHERE dni = :dni"), {"dni": dni})
         sesion.execute(
             text("DELETE FROM bloqueo WHERE profesional_id = :prof"),
             {"prof": str(prof_id)},
@@ -752,9 +728,7 @@ def _limpiar_concurrencia(test_engine, prof_id, dnis):
         sesion.close()
 
 
-def test_reserva_duracion_multiplo_bloque_contiguo_201(
-    client, db_session, reloj
-):
+def test_reserva_duracion_multiplo_bloque_contiguo_201(client, db_session, reloj):
     """# AC R3 S3: `duracion_min=60` reserva dos slots contiguos."""
     from app.models.turno import Turno
 
@@ -827,9 +801,7 @@ def test_reserva_slot_bloqueado_409_alternativos(
         _limpiar_concurrencia(test_engine, prof_id, ["30999001"])
 
 
-def test_reserva_inicio_no_alineado_409(
-    client_commit, db_session, test_engine
-):
+def test_reserva_inicio_no_alineado_409(client_commit, db_session, test_engine):
     """# AC R4 S2: `inicio` fuera de la grilla → 409 con alternativos alineados."""
     prof_id = _setup_concurrencia(test_engine)
     try:
@@ -876,9 +848,7 @@ def test_reserva_bloque_contiguo_segundo_slot_ocupado_409(
         assert _turnos_prof(db_session, prof_id) == 1
         assert _paciente_por_dni(db_session, "30999001") == 0
     finally:
-        _limpiar_concurrencia(
-            test_engine, prof_id, ["30999001", "30999088"]
-        )
+        _limpiar_concurrencia(test_engine, prof_id, ["30999001", "30999088"])
 
 
 def test_reserva_borde_ventana_fin_hasta_201(client, db_session, reloj):
@@ -933,15 +903,13 @@ def test_reserva_alternativos_mismo_dia_duracion_pedida(
             ini = _inicio_utc(alternativa)
             assert ini.astimezone(TZ).date() == date(2026, 10, 19)
             assert ini != inicio
-            assert datetime.fromisoformat(
-                alternativa["fin"]
-            ) == ini + timedelta(minutes=60)
+            assert datetime.fromisoformat(alternativa["fin"]) == ini + timedelta(
+                minutes=60
+            )
             assert alternativa["duracion_min"] == 60
             assert ini.astimezone(TZ).minute % 30 == 0
     finally:
-        _limpiar_concurrencia(
-            test_engine, prof_id, ["30999001", "30999088"]
-        )
+        _limpiar_concurrencia(test_engine, prof_id, ["30999001", "30999088"])
 
 
 def test_reserva_turno_cancelado_no_bloquea_201(client, db_session, reloj):
@@ -989,9 +957,7 @@ def test_reserva_slot_ocupado_409_con_alternativos(
         assert _turnos_prof(db_session, prof_id) == 1
         assert _paciente_por_dni(db_session, "30999001") == 0
     finally:
-        _limpiar_concurrencia(
-            test_engine, prof_id, ["30999001", "30999088"]
-        )
+        _limpiar_concurrencia(test_engine, prof_id, ["30999001", "30999088"])
 
 
 def test_reserva_segunda_transaccion_espera_lock_409(test_engine):
@@ -1090,18 +1056,13 @@ def test_reserva_segunda_transaccion_espera_lock_409(test_engine):
                 verificacion.query(Turno)
                 .filter(
                     Turno.profesional_id == prof_id,
-                    Turno.estado.in_(
-                        [TurnoEstado.reservado, TurnoEstado.confirmado]
-                    ),
+                    Turno.estado.in_([TurnoEstado.reservado, TurnoEstado.confirmado]),
                 )
                 .count()
             )
             assert activos == 1
             assert (
-                verificacion.query(Paciente)
-                .filter(Paciente.dni == dni_b)
-                .count()
-                == 0
+                verificacion.query(Paciente).filter(Paciente.dni == dni_b).count() == 0
             )
         finally:
             verificacion.close()
@@ -1205,18 +1166,13 @@ def test_reserva_exclude_autoridad_final_409(test_engine):
                 verificacion.query(Turno)
                 .filter(
                     Turno.profesional_id == prof_id,
-                    Turno.estado.in_(
-                        [TurnoEstado.reservado, TurnoEstado.confirmado]
-                    ),
+                    Turno.estado.in_([TurnoEstado.reservado, TurnoEstado.confirmado]),
                 )
                 .count()
             )
             assert activos == 1
             assert (
-                verificacion.query(Paciente)
-                .filter(Paciente.dni == dni_b)
-                .count()
-                == 0
+                verificacion.query(Paciente).filter(Paciente.dni == dni_b).count() == 0
             )
         finally:
             verificacion.close()
@@ -1352,9 +1308,7 @@ def test_reserva_rate_limit_dentro_limite_201(client_rate_limit, db_session):
     assert pasa is False
 
 
-def test_reserva_rate_limit_decima_pasa_undecima_429(
-    client_rate_limit, db_session
-):
+def test_reserva_rate_limit_decima_pasa_undecima_429(client_rate_limit, db_session):
     """# AC R7 S2: 9 consumidas → la 10 da 201 y la 11 da 429 sin turno."""
     from app.models.turno import Turno
 

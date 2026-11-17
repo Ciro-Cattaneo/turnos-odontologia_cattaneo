@@ -56,11 +56,7 @@ def test_reserva_faltantes_400_por_campo():
 def test_reserva_vacios_400_por_campo():
     """# AC R2 S2: vacío o solo espacios cuenta como faltante."""
     detalle = _detalle(
-        _body(
-            paciente=_paciente(
-                nombre="", telefono="   ", obra_social=""
-            )
-        )
+        _body(paciente=_paciente(nombre="", telefono="   ", obra_social=""))
     )
     campos = {d["campo"] for d in detalle}
     assert {

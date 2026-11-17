@@ -51,9 +51,7 @@ def test_primer_login_rota_hash_legacy_a_argon2id(client, db_session):
     )
     db_session.flush()
     antes = db_session.execute(
-        sqlalchemy.text(
-            "SELECT password_hash FROM usuario_staff WHERE email = :email"
-        ),
+        sqlalchemy.text("SELECT password_hash FROM usuario_staff WHERE email = :email"),
         {"email": "rota@ficticio.test"},
     ).scalar()
     assert antes.startswith("pbkdf2_sha256$")
@@ -64,9 +62,7 @@ def test_primer_login_rota_hash_legacy_a_argon2id(client, db_session):
     assert primero.status_code == 200
     db_session.expire_all()
     despues = db_session.execute(
-        sqlalchemy.text(
-            "SELECT password_hash FROM usuario_staff WHERE email = :email"
-        ),
+        sqlalchemy.text("SELECT password_hash FROM usuario_staff WHERE email = :email"),
         {"email": "rota@ficticio.test"},
     ).scalar()
     assert despues.startswith("$argon2id$")
@@ -92,9 +88,7 @@ def test_segundo_login_usa_hash_rotado_directo(client, db_session):
     assert client.post("/api/auth/login", json=body).status_code == 200
     assert client.post("/api/auth/login", json=body).status_code == 200
     guardado = db_session.execute(
-        sqlalchemy.text(
-            "SELECT password_hash FROM usuario_staff WHERE email = :email"
-        ),
+        sqlalchemy.text("SELECT password_hash FROM usuario_staff WHERE email = :email"),
         {"email": "rota2@ficticio.test"},
     ).scalar()
     assert guardado.startswith("$argon2id$")
@@ -120,9 +114,7 @@ def test_password_incorrecta_no_rota_hash_legacy(client, db_session):
     )
     assert fallo.status_code == 401
     guardado = db_session.execute(
-        sqlalchemy.text(
-            "SELECT password_hash FROM usuario_staff WHERE email = :email"
-        ),
+        sqlalchemy.text("SELECT password_hash FROM usuario_staff WHERE email = :email"),
         {"email": "norota@ficticio.test"},
     ).scalar()
     assert guardado.startswith("pbkdf2_sha256$")

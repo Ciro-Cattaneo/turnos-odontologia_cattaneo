@@ -64,9 +64,7 @@ CAMPOS_STAFF_OUT = (
     "notificaciones_encoladas",
 )
 
-StaffRecepcion = Annotated[
-    UsuarioStaff, Depends(require_role("recepcion", "admin"))
-]
+StaffRecepcion = Annotated[UsuarioStaff, Depends(require_role("recepcion", "admin"))]
 
 BODY_OPCIONAL = Body(default=None)
 
@@ -223,9 +221,7 @@ def crear(
     return {clave: resultado[clave] for clave in CAMPOS_STAFF_OUT}
 
 
-def _cancelar_publico(
-    token_raw: str, turno_id_raw: str, db, now_provider
-) -> dict:
+def _cancelar_publico(token_raw: str, turno_id_raw: str, db, now_provider) -> dict:
     """Flujo exacto de C-06 (token como única credencial)."""
     turno_id = _parse_uuid(turno_id_raw)
     token = _parse_uuid(token_raw)
@@ -281,9 +277,7 @@ def cancelar(
 ) -> dict:
     """Cancela por `?token=` (C-06) o como staff sin query (C-07 D-6)."""
     if request.query_params:
-        return _cancelar_publico(
-            _parse_query_token(request), id, db, now_provider
-        )
+        return _cancelar_publico(_parse_query_token(request), id, db, now_provider)
 
     staff = staff_opcional(request, db)
     if staff is None:

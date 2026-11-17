@@ -28,6 +28,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/app/ ./app/
 COPY backend/alembic/ ./alembic/
 COPY backend/alembic.ini .
+# Scripts operativos (seed admin, bootstrap de demo, anonimización): permiten
+# `docker compose run --rm web python scripts/seed_admin.py` sin montar el repo.
+COPY backend/scripts/ ./scripts/
 
 COPY --from=frontend /fe/dist ./static
 

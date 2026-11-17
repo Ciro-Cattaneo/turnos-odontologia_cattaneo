@@ -29,10 +29,12 @@ powershell -ExecutionPolicy Bypass -File .\iniciar-demo.ps1
 
 Qué hace el script: verifica Python y las dependencias del backend (instala
 `backend/requirements.txt` solo si falta algo), crea `.env` desde `.env.example`
-si no existe, fuerza `NOTIF_WORKER_ENABLED=false` y
-`FRONTEND_URL=http://localhost:<puerto>`, aplica migraciones Alembic, carga datos
-ficticios idempotentes (admin, 3 profesionales, horarios y turnos), compila la SPA
-en `static/` si hace falta y arranca API + SPA en el mismo origen.
+si no existe, reescribe `DATABASE_URL` al host `127.0.0.1` si venía con el host
+`db` del compose (conserva usuario/password/base), fuerza
+`NOTIF_WORKER_ENABLED=false` y `FRONTEND_URL=http://localhost:<puerto>`, aplica
+migraciones Alembic, carga datos ficticios idempotentes (admin, 3 profesionales,
+horarios y turnos), compila la SPA en `static/` si hace falta y arranca API + SPA
+en el mismo origen.
 
 - URL: `http://localhost:8000` (SPA y API en el mismo host/puerto).
 - Credenciales staff: salen de `.env` (`ADMIN_EMAIL` / `ADMIN_PASSWORD`); el
@@ -58,21 +60,42 @@ Frontend (desde `frontend/`):
 npm install
 ```
 
-`.env` está gitigneado y `.env.example` trae solo placeholders ficticios: completar los valores locales tras copiar (nunca commitear `.env`).
+`.env` está ignorado por git y `.env.example` trae solo placeholders ficticios: completar los valores locales tras copiar (nunca commitear `.env`).
+
+## API interactiva (Swagger)
+
+La API expone su documentación OpenAPI generada por FastAPI, sin autenticación:
+
+| Ruta | Qué es |
+|------|--------|
+| `/docs` | Swagger UI (probar los endpoints desde el navegador) |
+| `/redoc` | ReDoc (lectura) |
+| `/openapi.json` | Especificación OpenAPI 3.1 |
+
+Con la demo o el compose levantados: <http://localhost:8000/docs>. Los endpoints
+`/api/auth/*` y el resto de `/api/staff/*` requieren sesión: primero
+`POST /api/auth/login` (cookie httpOnly) y después probar el resto desde el mismo
+navegador. `/api/health` responde sin auth ni DB.
 
 ## Tests y checks
 
 En este host las herramientas Python NO están en PATH: usar siempre `python -m`
 (`ruff` y `alembic` directos fallan; verificado).
 
-Backend (desde la raíz):
+Backend (desde la raíz; requiere Postgres local corriendo y `.env` creado desde
+`.env.example`; `pytest` usa la base real `turnos_test`, la crea/borra a partir
+del `DATABASE_URL` de `.env` y aplica las migraciones):
 
 ```powershell
-python -m pytest backend/tests/              # 29 tests
-python -m ruff check backend/                # lint (config en backend/pyproject.toml)
-python -m ruff format --check backend/       # formato
-python -m alembic -c backend/alembic.ini heads  # sin salida + exit 0 = ok (aún sin migraciones de dominio)
+python -m pytest backend/tests/ -q          # 776 tests (incluye los de contrato de deploy y SPA)
+python -m ruff check backend/               # lint (config en backend/pyproject.toml)
+python -m ruff format --check backend/      # formato
+python -m alembic -c backend/alembic.ini heads   # 002_agenda_meta (head)
 ```
+
+Los tests de SPA/deploy no requieren Docker ni un build de la SPA: la suite fija
+`STATIC_DIR` a un directorio inexistente y cada caso monta el suyo. Tampoco
+dependen de que `static/` exista (si la demo lo generó, no afecta).
 
 Secretos (sin herramienta dedicada en el repo): el test estático
 `backend/tests/test_env_example.py` verifica que `.env.example` cubra las 13 vars
@@ -80,15 +103,16 @@ de KB-08 y no contenga secretos reales; además `.env` debe seguir ignorado:
 
 ```powershell
 python -m pytest backend/tests/test_env_example.py
-git check-ignore -v .env   # debe mostrar .gitignore:3:.env
+git check-ignore -v .env   # debe mostrar la línea de .gitignore que lo ignora
 ```
 
 Frontend (desde `frontend/`; scripts exactos en `package.json`: `dev`, `build`,
 `preview`, `test` — no existe script `lint`):
 
 ```powershell
-npm test        # = npx vitest run, 5 tests
-npm run build   # tsc -b + vite build
+npm test        # = npx vitest run: 313 tests en 38 archivos
+npx tsc -b      # typecheck estricto (tsc -b), sin errores
+npm run build   # = tsc -b + vite build
 ```
 
 Arranque local sin Docker (opcional, desde `backend/` con `.env` cargado):
@@ -96,6 +120,23 @@ Arranque local sin Docker (opcional, desde `backend/` con `.env` cargado):
 ```powershell
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000  # salud: GET /api/health -> {"status": "ok"}, sin auth ni DB
 ```
+
+## Estado del proyecto
+
+Cierre del roadmap v1: **13 changes archivados** en `openspec/changes/archive/`
+(C-01…C-13), 18 specs sincronizadas y 0 changes activos (`openspec list`).
+
+| Estado | Changes | Nota |
+|--------|---------|------|
+| **Completo, probado y archivado** (12) | C-01 foundation · C-02 core-models · C-03 auth-staff-rbac · C-04 agenda · C-05 reserva online · C-06 cancelación por token · C-07 recepción · C-08 notificaciones mail · C-09 frontend reserva · C-10 frontend agenda staff · C-11 admin + reportes · C-13 frontend admin | Cada uno con proposal, design, specs, tasks 100% y tests ejecutados antes de archivar |
+| **Implementado, verificación operativa pendiente** (1) | C-12 deploy-single-host | Tareas 7.1–7.8 (`docker compose up`, health en contenedor, PaaS, TLS, backup/restore, cron) **no ejecutadas**: este host no tiene Docker. El código, la imagen, el compose y los tests de contrato están completos |
+| **QA manual pendiente** | C-13 (tarea 8.6) | Checklist a 360 px en navegador real con lector de pantalla; el resto de C-13 está probado (313 tests Vitest) |
+
+Limitaciones aceptadas de v1 (documentadas en `knowledge-base/10_preguntas_abiertas.md`):
+recordatorios solo por mail (IN-01), obra social como texto libre (IN-02), worker
+en proceso con APScheduler sin Redis (PB-03) y reportes sin export (PB-06).
+
+Fuera del alcance de este repo: video de presentación y archivo TXT de entrega.
 
 ## MCP: Context7 (documentación del stack)
 
@@ -117,7 +158,9 @@ Context7 es un servidor MCP remoto de solo lectura con documentación vigente y 
 - Una respuesta del MCP se contrasta antes de decidir; no es fuente de verdad por sí sola.
 
 ### Requisitos y configuración
-Cliente opencode con soporte MCP remoto, HTTPS a `mcp.context7.com` y sin credenciales obligatorias (API key gratuita opcional). La configuración es **global y externa al repo**, en `C:\Users\ciroc\.config\opencode\opencode.json`:
+Cliente opencode con soporte MCP remoto, HTTPS a `mcp.context7.com` y sin
+credenciales obligatorias (API key gratuita opcional). La config vive **en el
+repo**, versionada y sin secretos, en `opencode.json` (raíz):
 
 ```json
 {
@@ -132,17 +175,28 @@ Cliente opencode con soporte MCP remoto, HTTPS a `mcp.context7.com` y sin creden
 }
 ```
 
-Se puede llevar a un `opencode.json` en la raíz del repo para hacerla reproducible por proyecto; `opencode.jsonc` no se usa para esta config.
+Para reproducirlo: clonar el repo y abrir opencode en él (`opencode mcp list`
+debe mostrar `context7 connected`). No hace falta configurar nada más; si ya
+tenés una config global, opencode combina ambas. `opencode.jsonc` no se usa
+para esta config. `engram` (memoria local) queda como integración opcional del
+entorno del autor: es un MCP local (`command: ["engram", "mcp"]`) y no se
+versiona porque no aporta al alcance evaluado.
 
 ### Verificación
-`opencode mcp list` debe mostrar dos servidores `connected` (`context7` y `engram`). Prueba de herramienta (2026-11-02): resolver `FastAPI` devuelve `/websites/fastapi_tiangolo` y `query-docs` sobre ese id responde con documentación de `EmailStr` y errores de validación de Pydantic.
+`opencode mcp list` muestra `context7` como `connected` en una sesión nueva
+(evidencia en `docs/skills-mcp/evidencias/05-invocacion-sesion-nueva.md`).
+Prueba de herramienta (2026-11-02): resolver `FastAPI` devuelve
+`/websites/fastapi_tiangolo` y `query-docs` sobre ese id responde con
+documentación de `EmailStr` y errores de validación de Pydantic; las dos
+consultas que cambiaron decisiones de diseño están en
+`docs/skills-mcp/evidencias/01-context7-consultas.md`.
 
 ### Problemas conocidos
 - `NativeCommandError` en PowerShell 5.1: el shim `opencode.ps1` escribe parte de la salida por stderr y PowerShell lo marca en rojo aunque el comando termine bien; no es un fallo de conexión. Invocar `opencode.exe` directamente o ignorar ese stream.
 - 429 por límite sin API key: definir `CONTEXT7_API_KEY` como variable de entorno y referenciarla en `headers` como `{env:CONTEXT7_API_KEY}`.
 - Si el servidor no aparece, confirmar que la entrada está en `opencode.json` y reiniciar la sesión del agente.
 
-El MCP se documenta como integración; no se registra como skill en `.atl/skill-registry.md`. Engram también está configurado (memoria persistente), pero la integración documentada para este TP es Context7.
+El MCP se documenta como integración; no se registra como skill en `.atl/skill-registry.md`. La config vive en `opencode.json` (raíz, sin secretos); `engram` es una integración local opcional del entorno del autor y no es parte del alcance.
 
 ## Docker (PENDING en este host)
 
@@ -151,11 +205,20 @@ Ruta primaria cuando haya Docker Desktop (servicios `web`+`db` Postgres 16;
 
 ```powershell
 docker compose config
-Copy-Item .env.example .env
+Copy-Item .env.example .env      # si todavía no hay .env
+# crear .env.docker (gitignored) con DATABASE_URL host `db` + POSTGRES_PASSWORD
+docker compose build web
+docker compose up -d db                                    # esperar healthy
+docker compose run --rm web alembic upgrade head           # migraciones
+docker compose run --rm web python scripts/seed_admin.py   # admin inicial
 docker compose up -d
 curl.exe -f http://localhost:8000/api/health
-docker compose down
+docker compose down              # conserva el volumen pgdata
 ```
+
+Detalle de variables (`.env` vs `.env.docker`), TLS y backups en
+`docs/deploy-single-host.md` §5. Los scripts de `backend/scripts/` ya viajan
+dentro de la imagen, por eso el seed corre con `python scripts/...`.
 
 PENDING: en este host Docker no está instalado (virtualización de firmware
 desactivada, sin acceso a BIOS). El YAML solo se validó estructuralmente; los
@@ -169,13 +232,15 @@ smoke Docker en máquina con Docker antes de darlo por verde. Detalle en
 backend/            # FastAPI: app/ (main, core, db, modules/*), alembic/, tests/, Dockerfile, requirements.txt
 frontend/           # React 18 + Vite 5 + React Router: src/{features,shared,pages}, package.json
 docker-compose.yml  # web (8000) + db (Postgres 16); worker/redis comentados
+opencode.json       # MCP Context7 reproducible (sin secretos)
 .env.example        # 13 vars KB-08 + REDIS_URL opcional comentada (placeholders ficticios)
+.env.docker         # overrides de compose, gitignored (DB host `db`, password)
 docs/discovery/     # informe de discovery previo
-docs/skills-mcp/    # ficha de investigación e informe del TP (skill propia + MCP)
+docs/skills-mcp/    # ficha de investigación, aplicación y evidencias (skill propia + MCP)
 .opencode/skills/   # skills propias versionadas (turno-spec-review)
 knowledge-base/     # fuente de verdad del dominio (01-10 + README)
-openspec/           # changes (activos + archive/2026-10-12-c-01-foundation-setup)
-CHANGES.md          # índice canónico de changes C-01..C-12
+openspec/           # 18 specs + changes/archive/ con los 13 changes cerrados
+CHANGES.md          # índice canónico de changes C-01..C-13
 AGENTS.md           # instrucciones para agentes (contrato)
 ```
 

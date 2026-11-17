@@ -104,9 +104,7 @@ def compute_slots(
                 slot_fin = cursor + paso
                 ocupado = any(
                     _solapa(cursor, slot_fin, b.desde, b.hasta) for b in bloqueos
-                ) or any(
-                    _solapa(cursor, slot_fin, t.inicio, t.fin) for t in ocupados
-                )
+                ) or any(_solapa(cursor, slot_fin, t.inicio, t.fin) for t in ocupados)
                 if not ocupado:
                     libres.append(Slot(inicio=cursor, fin=slot_fin))
                 cursor = slot_fin

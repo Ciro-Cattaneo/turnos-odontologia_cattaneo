@@ -90,11 +90,7 @@ def _encolar(
     """Inserta la `Notificacion cancelacion` en savepoint aislado (D-6)."""
     try:
         with db.begin_nested():
-            paciente = (
-                db.query(Paciente)
-                .filter(Paciente.id == turno.paciente_id)
-                .one()
-            )
+            paciente = db.query(Paciente).filter(Paciente.id == turno.paciente_id).one()
             profesional = (
                 db.query(Profesional)
                 .filter(Profesional.id == turno.profesional_id)

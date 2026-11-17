@@ -82,9 +82,7 @@ def test_429_identico_con_credenciales_validas_e_invalidas(
     assert con_validas.text == con_invalidas.text
 
 
-def test_tras_la_ventana_login_valido_sin_bloqueo(
-    client, db_session, monkeypatch
-):
+def test_tras_la_ventana_login_valido_sin_bloqueo(client, db_session, monkeypatch):
     """# AC staff-auth/Rate-limit-sin-lockout: sin lockout permanente en v1."""
     from app.core import ratelimit
 

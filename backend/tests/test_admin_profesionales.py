@@ -433,9 +433,7 @@ def test_baja_profesional_activo_false_conserva_historial(client, db_session):
 
 
 @pytest.mark.parametrize("estado", ["reservado", "confirmado"])
-def test_baja_profesional_turno_futuro_200_turno_intacto(
-    client, db_session, estado
-):
+def test_baja_profesional_turno_futuro_200_turno_intacto(client, db_session, estado):
     """# AC AP-R3: turno futuro no bloquea la baja (sin 409) y queda intacto."""
     from app.models.notificacion import Notificacion
     from app.models.turno import Turno, TurnoEstado
@@ -453,16 +451,12 @@ def test_baja_profesional_turno_futuro_200_turno_intacto(
     fila = db_session.get(Turno, turno.id)
     assert (fila.estado, fila.inicio, fila.fin, fila.duracion_min) == antes
     assert (
-        db_session.query(Notificacion)
-        .filter(Notificacion.turno_id == turno.id)
-        .count()
+        db_session.query(Notificacion).filter(Notificacion.turno_id == turno.id).count()
         == 0
     )
 
 
-def test_baja_profesional_turnos_futuros_gestionables_por_staff(
-    client, db_session
-):
+def test_baja_profesional_turnos_futuros_gestionables_por_staff(client, db_session):
     """# AC AP-R3: la agenda staff sigue mostrando y cancelando turnos futuros."""
     from app.models.turno import Turno, TurnoEstado
 
@@ -490,9 +484,7 @@ def test_baja_profesional_turnos_futuros_gestionables_por_staff(
     assert db_session.get(Turno, turno.id).estado == TurnoEstado.cancelado
 
 
-def test_baja_profesional_sale_catalogo_publico_y_alta_reserva(
-    client, db_session
-):
+def test_baja_profesional_sale_catalogo_publico_y_alta_reserva(client, db_session):
     """# AC AP-R3/R4: baja lo saca del catálogo; reservar da 404 (C-05)."""
     from app.models.turno import Turno, TurnoEstado
 
@@ -524,9 +516,7 @@ def test_baja_profesional_sale_catalogo_publico_y_alta_reserva(
     assert db_session.get(Turno, turno.id).estado == TurnoEstado.reservado
 
 
-def test_put_profesional_activo_false_misma_semantica_que_delete(
-    client, db_session
-):
+def test_put_profesional_activo_false_misma_semantica_que_delete(client, db_session):
     """# AC AP-R3: `PUT activo=false` no borra filas dependientes."""
     from app.models.bloqueo import Bloqueo
     from app.models.disponibilidad import Disponibilidad
@@ -605,9 +595,7 @@ def test_baja_profesional_parametro_fisico_400(client, db_session):
     prof = _prof(db_session)
     _admin(client, db_session)
 
-    resp = client.delete(
-        f"/api/profesionales/{prof.id}", params={"fisico": "true"}
-    )
+    resp = client.delete(f"/api/profesionales/{prof.id}", params={"fisico": "true"})
 
     assert resp.status_code == 400, resp.text
     assert "fisico" in _campos(resp.json()["detail"])
@@ -665,9 +653,7 @@ def _limpiar_conc(test_engine, prof_id):
             text("DELETE FROM disponibilidad WHERE profesional_id = :p"),
             {"p": prof_id},
         )
-        sesion.execute(
-            text("DELETE FROM profesional WHERE id = :p"), {"p": prof_id}
-        )
+        sesion.execute(text("DELETE FROM profesional WHERE id = :p"), {"p": prof_id})
         sesion.commit()
     finally:
         sesion.close()
@@ -813,9 +799,7 @@ def test_listado_admin_incluye_inactivos(client, db_session):
     inactivo = _prof(db_session, activo=False)
     _admin(client, db_session)
 
-    resp = client.get(
-        "/api/profesionales", params={"incluir_inactivos": "true"}
-    )
+    resp = client.get("/api/profesionales", params={"incluir_inactivos": "true"})
 
     assert resp.status_code == 200, resp.text
     items = {p["id"]: p for p in resp.json()["items"]}
@@ -895,18 +879,14 @@ def test_listado_publico_columnas_sin_activo(client, db_session):
 
 
 @pytest.mark.parametrize("rol", [StaffRol.recepcion, StaffRol.odontologo])
-def test_listado_incluir_inactivos_recepcion_odontologo_403(
-    client, db_session, rol
-):
+def test_listado_incluir_inactivos_recepcion_odontologo_403(client, db_session, rol):
     """# AC AP-R4/R5: flag con sesión no admin → 403 genérico."""
     link = _prof(db_session) if rol is StaffRol.odontologo else None
     email = f"{rol.value}.listado@cattaneo.test"
     _staff(db_session, rol, email, profesional_id=link.id if link else None)
     _login(client, email)
 
-    resp = client.get(
-        "/api/profesionales", params={"incluir_inactivos": "true"}
-    )
+    resp = client.get("/api/profesionales", params={"incluir_inactivos": "true"})
 
     assert resp.status_code == 403
     assert "activo" not in resp.text
@@ -916,9 +896,7 @@ def test_listado_incluir_inactivos_sin_sesion_401(client, db_session):
     """# AC AP-R4/R5: flag sin sesión → 401 (no degrada a público)."""
     _prof(db_session)
 
-    resp = client.get(
-        "/api/profesionales", params={"incluir_inactivos": "true"}
-    )
+    resp = client.get("/api/profesionales", params={"incluir_inactivos": "true"})
 
     assert resp.status_code == 401
 
@@ -953,9 +931,7 @@ def test_reactivacion_profesional_ya_activo_200(client, db_session):
 
 
 @pytest.mark.parametrize("rol", [StaffRol.recepcion, StaffRol.odontologo])
-def test_profesionales_escrituras_recepcion_odontologo_403(
-    client, db_session, rol
-):
+def test_profesionales_escrituras_recepcion_odontologo_403(client, db_session, rol):
     """# AC AP-R5: POST/PUT/DELETE/GET-admin con sesión no admin → 403."""
     from app.models.profesional import Profesional
 
@@ -970,9 +946,7 @@ def test_profesionales_escrituras_recepcion_odontologo_403(
         f"/api/profesionales/{objetivo.id}", json={"nombre": "Nombre Alterado"}
     )
     baja = client.delete(f"/api/profesionales/{objetivo.id}")
-    listado = client.get(
-        "/api/profesionales", params={"incluir_inactivos": "true"}
-    )
+    listado = client.get("/api/profesionales", params={"incluir_inactivos": "true"})
 
     for resp in (alta, edicion, baja, listado):
         assert resp.status_code == 403, resp.text
@@ -999,5 +973,3 @@ def test_profesionales_escrituras_sin_sesion_401(client, db_session):
     fila = db_session.get(Profesional, prof.id)
     assert fila.activo is True
     assert fila.nombre == prof.nombre
-
-

@@ -205,9 +205,7 @@ class CorreccionPacienteIn(BaseModel):
             return v
         valor = v.strip()
         if not valor.isdigit() or not 7 <= len(valor) <= 8:
-            raise PydanticCustomError(
-                "dni_formato", "`dni` debe tener 7 u 8 dígitos"
-            )
+            raise PydanticCustomError("dni_formato", "`dni` debe tener 7 u 8 dígitos")
         return valor
 
     @field_validator("telefono")

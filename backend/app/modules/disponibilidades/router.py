@@ -91,16 +91,13 @@ def listar(
         require_own_profesional(filtro.profesional_id, staff)
     elif staff.rol not in ("recepcion", "admin"):
         raise HTTPException(status_code=403, detail="Sin permiso")
-    q = (
-        db.query(
-            Disponibilidad.id,
-            Disponibilidad.profesional_id,
-            Disponibilidad.dia_semana,
-            Disponibilidad.hora_desde,
-            Disponibilidad.hora_hasta,
-        )
-        .order_by(Disponibilidad.id)
-    )
+    q = db.query(
+        Disponibilidad.id,
+        Disponibilidad.profesional_id,
+        Disponibilidad.dia_semana,
+        Disponibilidad.hora_desde,
+        Disponibilidad.hora_hasta,
+    ).order_by(Disponibilidad.id)
     if filtro.profesional_id is not None:
         q = q.filter(Disponibilidad.profesional_id == filtro.profesional_id)
     if filtro.cursor is not None:

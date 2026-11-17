@@ -89,9 +89,7 @@ def test_login_valido_emite_cookie_con_rol(client, db_session):
 def test_login_invalido_indistinguible(client, db_session):
     """# AC staff-auth/Errores-genéricos: wrong ≡ desconocido ≡ inactivo."""
     mk_staff(db_session, "valida@ficticio.test", "password-ficticia-1")
-    mk_staff(
-        db_session, "inactiva@ficticio.test", "password-ficticia-1", activo=False
-    )
+    mk_staff(db_session, "inactiva@ficticio.test", "password-ficticia-1", activo=False)
     casos = [
         {"email": "valida@ficticio.test", "password": "otra-ficticia"},
         {"email": "nadie@ficticio.test", "password": "cualquiera-ficticia"},
@@ -130,12 +128,8 @@ def test_dos_dispositivos_sesiones_independientes(client, db_session):
     assert primero.status_code == 200
     assert segundo.status_code == 200
     secreto = get_settings().SECRET_KEY
-    jti_1 = jwt.decode(
-        primero.cookies["session"], secreto, algorithms=["HS256"]
-    )["jti"]
-    jti_2 = jwt.decode(
-        segundo.cookies["session"], secreto, algorithms=["HS256"]
-    )["jti"]
+    jti_1 = jwt.decode(primero.cookies["session"], secreto, algorithms=["HS256"])["jti"]
+    jti_2 = jwt.decode(segundo.cookies["session"], secreto, algorithms=["HS256"])["jti"]
     assert jti_1 != jti_2
 
 
@@ -154,7 +148,7 @@ def test_logout_limpia_cookie_y_reuse_es_401(client, db_session):
     logout = client.post("/api/auth/logout")
     assert logout.status_code == 200
     assert "session" not in client.cookies
-    assert 'Max-Age=0' in logout.headers["set-cookie"]
+    assert "Max-Age=0" in logout.headers["set-cookie"]
     reuse = client.post("/api/auth/logout", cookies={"session": vieja})
     assert reuse.status_code == 200
     with pytest.raises(HTTPException) as exc:
@@ -213,9 +207,7 @@ def test_me_refleja_rol_actualizado_desde_db(client, db_session):
     )
     assert login.status_code == 200
     db_session.execute(
-        sqlalchemy.text(
-            "UPDATE usuario_staff SET rol = 'admin' WHERE email = :email"
-        ),
+        sqlalchemy.text("UPDATE usuario_staff SET rol = 'admin' WHERE email = :email"),
         {"email": "cambia@ficticio.test"},
     )
     db_session.flush()

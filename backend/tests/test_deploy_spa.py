@@ -18,10 +18,16 @@ INDEX_FICTICIO = (
     '<div id="root">SPA ficticia</div></body></html>'
 )
 
+# Directorio que nunca existe: representa "sin build" sin depender de que el
+# repo tenga o no `static/` (la demo local lo genera y está gitignored).
+STATIC_INEXISTENTE = Path(__file__).resolve().parent / "_static_inexistente_en_tests"
+
 
 def _recargar(monkeypatch: pytest.MonkeyPatch, static_dir: Path | None) -> TestClient:
     if static_dir is None:
-        monkeypatch.delenv("STATIC_DIR", raising=False)
+        # Ruta garantizada inexistente. Borrar la var caería al default
+        # `static`, que existe cuando se corrió la demo local (gitignored).
+        monkeypatch.setenv("STATIC_DIR", str(STATIC_INEXISTENTE))
     else:
         monkeypatch.setenv("STATIC_DIR", str(static_dir))
     modulo = importlib.reload(main_module)

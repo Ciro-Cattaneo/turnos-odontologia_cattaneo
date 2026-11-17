@@ -73,9 +73,7 @@ def crear_ventana(
     # AC agenda-disponibilidad/CRUD-staff (201, 409-con-conflicto, borde
     permitido, distinto-profesional/día permitido).
     """
-    prof = (
-        db.query(Profesional).filter(Profesional.id == profesional_id).one_or_none()
-    )
+    prof = db.query(Profesional).filter(Profesional.id == profesional_id).one_or_none()
     if prof is None or not prof.activo:
         raise HTTPException(status_code=404, detail="No encontrado")
     existentes = (

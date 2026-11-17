@@ -37,9 +37,7 @@ async def lifespan(_app: FastAPI):
     actuales = get_settings()
     scheduler = None
     if actuales.NOTIF_WORKER_ENABLED:
-        scheduler = crear_scheduler(
-            intervalo_min=actuales.NOTIF_WORKER_INTERVAL_MIN
-        )
+        scheduler = crear_scheduler(intervalo_min=actuales.NOTIF_WORKER_INTERVAL_MIN)
         scheduler.start()
     try:
         yield

@@ -49,9 +49,7 @@ def get_current_staff(
         user_id = UUID(str(claims["sub"]))
     except ValueError:
         raise UNAUTHORIZED from None
-    usuario = (
-        db.query(UsuarioStaff).filter(UsuarioStaff.id == user_id).one_or_none()
-    )
+    usuario = db.query(UsuarioStaff).filter(UsuarioStaff.id == user_id).one_or_none()
     if usuario is None or not usuario.activo:
         raise UNAUTHORIZED from None
     return usuario

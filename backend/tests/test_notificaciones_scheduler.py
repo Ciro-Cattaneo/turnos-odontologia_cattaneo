@@ -60,8 +60,7 @@ def _crear_notificacion(db_session):
             "duracion_min": turno.duracion_min,
             "token_cancelacion": str(turno.token_cancelacion),
             "cancel_url": (
-                "https://turnos.ficticio.test/cancelar?token="
-                f"{turno.token_cancelacion}"
+                f"https://turnos.ficticio.test/cancelar?token={turno.token_cancelacion}"
             ),
         },
     )
@@ -175,14 +174,13 @@ def test_worker_libera_lock_tras_ciclo(db_session):
 
 # --- 6.4 Sin Redis ---------------------------------------------------------
 
+
 def test_worker_no_requiere_redis():
     """PB-03: ningún módulo del worker referencia `REDIS_URL` ni `redis`."""
     from app.modules.notificaciones import worker
 
     raiz = Path(worker.__file__).resolve().parent
-    fuentes = "\n".join(
-        ruta.read_text(encoding="utf-8") for ruta in raiz.glob("*.py")
-    )
+    fuentes = "\n".join(ruta.read_text(encoding="utf-8") for ruta in raiz.glob("*.py"))
 
     assert "REDIS_URL" not in fuentes
     assert "import redis" not in fuentes

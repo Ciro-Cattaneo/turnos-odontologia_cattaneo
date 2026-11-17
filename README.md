@@ -87,7 +87,7 @@ Backend (desde la raíz; requiere Postgres local corriendo y `.env` creado desde
 del `DATABASE_URL` de `.env` y aplica las migraciones):
 
 ```powershell
-python -m pytest backend/tests/ -q          # 776 tests (incluye los de contrato de deploy y SPA)
+python -m pytest backend/tests/ -q          # 782 tests (incluye los de contrato de deploy y SPA)
 python -m ruff check backend/               # lint (config en backend/pyproject.toml)
 python -m ruff format --check backend/      # formato
 python -m alembic -c backend/alembic.ini heads   # 002_agenda_meta (head)
@@ -221,10 +221,11 @@ Detalle de variables (`.env` vs `.env.docker`), TLS y backups en
 dentro de la imagen, por eso el seed corre con `python scripts/...`.
 
 PENDING: en este host Docker no está instalado (virtualización de firmware
-desactivada, sin acceso a BIOS). El YAML solo se validó estructuralmente; los
-29 pytest + ruff + 5 vitest + `npm run build` sí están verdes. Re-ejecutar el
-smoke Docker en máquina con Docker antes de darlo por verde. Detalle en
-`openspec/changes/archive/2026-10-12-c-01-foundation-setup/tasks.md`.
+desactivada, sin acceso a BIOS). El YAML y los contratos de deploy se validaron
+sin daemon; 782 pytest + ruff + 313 vitest + `npm run build` están verdes.
+Re-ejecutar el smoke Docker (C-12, tareas 7.1–7.8) en una máquina con Docker
+antes de darlo por verde. Detalle en
+`openspec/changes/archive/2026-11-16-c-12-deploy-single-host/tasks.md`.
 
 ## Estructura del repo
 

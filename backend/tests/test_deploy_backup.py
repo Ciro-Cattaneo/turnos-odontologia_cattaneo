@@ -215,13 +215,36 @@ def _create_scratch_db() -> str:
     return name
 
 
+_REINTENTOS_DROP = 10
+_ESPERA_DROP_S = 0.2
+_SQLSTATE_DROP_TRANSITORIO = frozenset({"42501", "55006"})
+
+
 def _drop_scratch_db(name: str) -> None:
+    """Borra la base scratch tolerando los fallos transitorios del DROP.
+
+    `DROP DATABASE ... WITH (FORCE)` puede fallar con 42501 si un autovacuum
+    worker (superusuario) corre sobre esa base —el rol de la app no puede
+    terminarlo— o con 55006 si algo la sigue usando. Ambos duran milisegundos,
+    así que se reintenta con una espera corta; cualquier otro error se propaga.
+    """
     engine = _admin_engine()
     try:
-        with engine.connect() as conn:
-            conn.execute(
-                sqlalchemy.text(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)')
-            )
+        for intento in range(_REINTENTOS_DROP):
+            try:
+                with engine.connect() as conn:
+                    sentencia = sqlalchemy.text(
+                        f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)'
+                    )
+                    conn.execute(sentencia)
+                return
+            except sqlalchemy.exc.DBAPIError as exc:
+                transitorio = (
+                    getattr(exc.orig, "sqlstate", None) in _SQLSTATE_DROP_TRANSITORIO
+                )
+                if not transitorio or intento == _REINTENTOS_DROP - 1:
+                    raise
+                time.sleep(_ESPERA_DROP_S)
     finally:
         engine.dispose()
 
@@ -471,3 +494,140 @@ def test_restore_rechaza_target_no_vacio_sin_force(pg_test_url, tmp_path, scratc
     assert forzado.returncode == 0, forzado.stderr
     origen = _counts(pg_test_url)
     assert _counts(target_url) == origen
+
+
+# --- Retry del teardown de bases scratch (DO-R3, regresión de flake) --------
+#
+# `DROP DATABASE ... WITH (FORCE)` puede fallar con 42501 si un autovacuum
+# worker (superusuario) corre sobre la base: el rol de la app no puede
+# terminarlo. 55006 (object_in_use) es el otro transitorio esperable. Lo único
+# que se sustituye es el borde de la conexión SQL (regla dura 9), no la lógica
+# del helper: por eso `_admin_engine` y `time.sleep` se parchean en el módulo.
+
+_MODULO = sys.modules[__name__]
+
+
+class _OrigenError(Exception):
+    """Origen DB-API falso que expone `sqlstate`, como las excepciones de psycopg."""
+
+
+def _error_db(
+    sqlstate: str,
+    tipo: type[sqlalchemy.exc.DBAPIError] = sqlalchemy.exc.ProgrammingError,
+) -> sqlalchemy.exc.DBAPIError:
+    origen = _OrigenError("error simulado")
+    origen.sqlstate = sqlstate
+    return tipo("DROP DATABASE", {}, origen)
+
+
+class _ConexionFalsa:
+    def __init__(self, error: BaseException | None) -> None:
+        self._error = error
+
+    def __enter__(self) -> "_ConexionFalsa":
+        return self
+
+    def __exit__(self, *_exc: object) -> bool:
+        return False
+
+    def execute(self, _sentencia: object) -> None:
+        if self._error is not None:
+            raise self._error
+
+
+class _MotorFalso:
+    """Motor con guion: un error (o None) por cada intento de conexión."""
+
+    def __init__(self, guion: list[BaseException | None]) -> None:
+        self.guion = list(guion)
+        self.intentos = 0
+        self.desechado = False
+
+    def connect(self) -> _ConexionFalsa:
+        self.intentos += 1
+        error = self.guion.pop(0) if self.guion else None
+        return _ConexionFalsa(error)
+
+    def dispose(self) -> None:
+        self.desechado = True
+
+
+class _TiempoFalso:
+    def __init__(self, esperas: list[float]) -> None:
+        self.esperas = esperas
+
+    def sleep(self, segundos: float) -> None:
+        self.esperas.append(segundos)
+
+
+def _preparar_drop(
+    monkeypatch: pytest.MonkeyPatch,
+    guion: list[BaseException | None],
+) -> tuple[_MotorFalso, list[float]]:
+    motor = _MotorFalso(guion)
+    esperas: list[float] = []
+    monkeypatch.setattr(_MODULO, "_admin_engine", lambda: motor)
+    monkeypatch.setattr(_MODULO, "time", _TiempoFalso(esperas))
+    return motor, esperas
+
+
+def test_drop_scratch_db_reintenta_42501_y_termina(monkeypatch):
+    motor, esperas = _preparar_drop(monkeypatch, [_error_db("42501"), None])
+
+    _drop_scratch_db("turnos_bk_falso")
+
+    assert motor.intentos == 2
+    assert esperas == [0.2]
+    assert motor.desechado is True
+
+
+def test_drop_scratch_db_reintenta_55006_y_termina(monkeypatch):
+    motor, esperas = _preparar_drop(
+        monkeypatch, [_error_db("55006"), _error_db("42501"), None]
+    )
+
+    _drop_scratch_db("turnos_bk_falso")
+
+    assert motor.intentos == 3
+    assert esperas == [0.2, 0.2]
+
+
+def test_drop_scratch_db_no_reintenta_sqlstate_no_transitorio(monkeypatch):
+    motor, esperas = _preparar_drop(monkeypatch, [_error_db("42P01")] * 10)
+
+    with pytest.raises(sqlalchemy.exc.ProgrammingError):
+        _drop_scratch_db("turnos_bk_falso")
+
+    assert motor.intentos == 1
+    assert esperas == []
+
+
+def test_drop_scratch_db_no_reintenta_error_no_dbapi(monkeypatch):
+    motor, esperas = _preparar_drop(
+        monkeypatch, [RuntimeError("fallo inesperado")] * 10
+    )
+
+    with pytest.raises(RuntimeError):
+        _drop_scratch_db("turnos_bk_falso")
+
+    assert motor.intentos == 1
+    assert esperas == []
+
+
+def test_drop_scratch_db_agota_reintentos_y_relanza(monkeypatch):
+    motor, esperas = _preparar_drop(monkeypatch, [_error_db("42501")] * 10)
+
+    with pytest.raises(sqlalchemy.exc.ProgrammingError):
+        _drop_scratch_db("turnos_bk_falso")
+
+    assert motor.intentos == 10
+    assert esperas == [0.2] * 9
+
+
+def test_drop_scratch_db_primer_intento_no_espera(monkeypatch):
+    motor, esperas = _preparar_drop(monkeypatch, [None])
+
+    _drop_scratch_db("turnos_bk_falso")
+
+    assert motor.intentos == 1
+    assert esperas == []

@@ -198,15 +198,15 @@ consultas que cambiaron decisiones de diseño están en
 
 El MCP se documenta como integración; no se registra como skill en `.atl/skill-registry.md`. La config vive en `opencode.json` (raíz, sin secretos); `engram` es una integración local opcional del entorno del autor y no es parte del alcance.
 
-## Docker (PENDING en este host)
+## Docker
 
-Ruta primaria cuando haya Docker Desktop (servicios `web`+`db` Postgres 16;
+Ruta primaria para correr el sistema (servicios `web` + `db` Postgres 16;
 `worker`/`redis` solo stubs comentados por regla dura 6):
 
 ```powershell
 docker compose config
-Copy-Item .env.example .env      # si todavía no hay .env
-# crear .env.docker (gitignored) con DATABASE_URL host `db` + POSTGRES_PASSWORD
+Copy-Item .env.example .env                    # si todavía no hay .env
+Copy-Item .env.docker.example .env.docker      # overrides de Docker (gitignored)
 docker compose build web
 docker compose up -d db                                    # esperar healthy
 docker compose run --rm web alembic upgrade head           # migraciones
@@ -219,12 +219,36 @@ docker compose down              # conserva el volumen pgdata
 Detalle de variables (`.env` vs `.env.docker`), TLS y backups en
 `docs/deploy-single-host.md` §5. Los scripts de `backend/scripts/` ya viajan
 dentro de la imagen, por eso el seed corre con `python scripts/...`.
+Requiere Compose ≥ 2.24 (`env_file` con `required`).
 
-PENDING: en este host Docker no está instalado (virtualización de firmware
-desactivada, sin acceso a BIOS). El YAML y los contratos de deploy se validaron
-sin daemon; 782 pytest + ruff + 313 vitest + `npm run build` están verdes.
-Re-ejecutar el smoke Docker (C-12, tareas 7.1–7.8) en una máquina con Docker
-antes de darlo por verde. Detalle en
+### Verificación del camino Docker
+
+El host de desarrollo de este repo **no tiene virtualización habilitada**, así
+que Docker no se puede ejecutar localmente. Para que la verificación no dependa
+de una máquina puntual, el workflow `.github/workflows/docker-smoke.yml` corre
+en un runner con Docker y deja evidencia versionada y repetible (pestaña
+**Actions** → `docker-smoke`):
+
+| Paso del workflow | Qué verifica | C-12 |
+|---|---|---|
+| `config --quiet` con y sin `.env.docker` | compose válido y `required: false` | 7.1 |
+| `docker build` + `docker run --entrypoint id` | build OK y UID 10001 (no-root) | 7.2 |
+| `compose up --wait` + `compose port db 5432` | `web`/`db` healthy y DB no publicada | 7.3 |
+| `curl` a `/api/health`, `/`, `/staff/agenda`, `/api/inexistente`, `/docs` | SPA same-origin y 404 JSON | 7.4 |
+| `alembic upgrade head` + `scripts/seed_admin.py` | migraciones y scripts en la imagen | — |
+| `docker run` sin variables | fail-fast nombrando las faltantes | 7.5 |
+
+Sin daemon también se puede validar el compose con el binario standalone de
+Compose v2 (no requiere WSL ni Hyper-V):
+
+```powershell
+Invoke-WebRequest -Uri "https://github.com/docker/compose/releases/latest/download/docker-compose-windows-x86_64.exe" -OutFile "$env:USERPROFILE\docker-compose.exe"
+& "$env:USERPROFILE\docker-compose.exe" -f docker-compose.yml config --quiet
+```
+
+PENDING (requiere host/PaaS, no un runner): tareas 7.6–7.8 de C-12 —backup y
+restore reales con cliente Postgres, deploy en PaaS single instance y TLS con
+proxy inverso—. Los 782 pytest, ruff y los 313 vitest siguen verdes; detalle en
 `openspec/changes/archive/2026-11-16-c-12-deploy-single-host/tasks.md`.
 
 ## Estructura del repo
@@ -235,7 +259,8 @@ frontend/           # React 18 + Vite 5 + React Router: src/{features,shared,pag
 docker-compose.yml  # web (8000) + db (Postgres 16); worker/redis comentados
 opencode.json       # MCP Context7 reproducible (sin secretos)
 .env.example        # 13 vars KB-08 + REDIS_URL opcional comentada (placeholders ficticios)
-.env.docker         # overrides de compose, gitignored (DB host `db`, password)
+.env.docker.example # overrides de compose (host `db` + password), versionado
+.github/workflows/  # docker-smoke: build + compose up + health + fail-fast en CI
 docs/discovery/     # informe de discovery previo
 docs/skills-mcp/    # ficha de investigación, aplicación y evidencias (skill propia + MCP)
 .opencode/skills/   # skills propias versionadas (turno-spec-review)

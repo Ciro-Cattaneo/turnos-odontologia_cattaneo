@@ -78,6 +78,8 @@ La revisión esperada es `002_agenda_meta` (`alembic current`).
 
 ```bash
 docker compose config          # valida el compose
+cp .env.example .env           # si todavía no hay .env
+cp .env.docker.example .env.docker   # overrides de Docker (gitignored)
 docker compose build web
 docker compose up -d db        # esperar el healthcheck de db
 docker compose run --rm web alembic upgrade head
@@ -87,6 +89,15 @@ docker compose ps              # web y db en running/healthy
 ```
 
 Sólo `web` publica `WEB_PORT`. La base no mapea `5432` al host.
+
+### 5.0.1 Verificación automática (CI)
+
+`.github/workflows/docker-smoke.yml` corre en un runner con Docker y cubre las
+tareas 7.1–7.5 del change C-12 (compose válido con y sin `.env.docker`, build,
+UID no-root 10001, stack healthy, DB no publicada, health/SPA/404 JSON, y
+fail-fast sin variables). Se dispara en cada push a `main`, en PRs y a mano
+(`workflow_dispatch`); el log queda como evidencia reproducible. Las tareas
+7.6–7.8 (backup/restore, PaaS y TLS) siguen requiriendo un host real.
 
 ### 5.0 Variables: `.env` + `.env.docker`
 
@@ -98,7 +109,9 @@ romper la demo local:
   apuntando a `localhost:5432`.
 - `.env.docker` — overrides de Docker (gitignored): `DATABASE_URL` con host
   `db:5432`, `POSTGRES_PASSWORD` **con la misma password** que esa URL,
-  `FRONTEND_URL` y `NOTIF_WORKER_ENABLED`.
+  `FRONTEND_URL` y `NOTIF_WORKER_ENABLED`. Se crea con
+  `Copy-Item .env.docker.example .env.docker`; el ejemplo está versionado con
+  valores ficticios y consistente entre las dos variables.
 
 `POSTGRES_PASSWORD` se inyecta por `env_file` (no por interpolación), así que
 `db` y `web` leen exactamente el mismo valor y no hay fallback silencioso a una
